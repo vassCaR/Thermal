@@ -203,6 +203,20 @@ function DitheredWaves({
     }
   }, [size, gl]);
 
+  // Track the mouse at the WINDOW level so the ripple reacts everywhere, even
+  // where DOM content sits above the canvas (the canvas itself never receives
+  // those pointer events because it is behind the page content).
+  useEffect(() => {
+    if (!enableMouseInteraction) return;
+    const onPointerMove = e => {
+      const rect = gl.domElement.getBoundingClientRect();
+      const dpr = gl.getPixelRatio();
+      mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, [enableMouseInteraction, gl]);
+
   const prevColor = useRef([...waveColor]);
   useFrame(({ clock }) => {
     const u = waveUniformsRef.current;
