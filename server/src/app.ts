@@ -3,7 +3,7 @@
  * Kept separate from index.ts so it can be imported by the smoke test.
  */
 import cors from "@fastify/cors";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyError, type FastifyInstance } from "fastify";
 import { buildAdapters } from "./adapters/index.js";
 import { Batcher } from "./batcher.js";
 import { assertRealConfig, loadConfig, type Config } from "./config.js";
@@ -49,6 +49,17 @@ export async function buildApp(overrides?: Partial<Config>): Promise<BuiltApp> {
   });
 
   registerRoutes(app, { cfg, store, adapters, batcher });
+
+  // Global error handler: keep 4xx messages, but never leak internal 5xx detail
+  // (real-mode adapter throws would otherwise surface as raw 500 bodies).
+  app.setErrorHandler((err: FastifyError, req, reply) => {
+    req.log.error({ err }, "unhandled error");
+    const code =
+      typeof err.statusCode === "number" && err.statusCode >= 400 && err.statusCode < 500
+        ? err.statusCode
+        : 500;
+    reply.code(code).send({ error: code === 500 ? "Internal error" : err.message });
+  });
 
   app.log.info(
     {

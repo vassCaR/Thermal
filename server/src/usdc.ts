@@ -17,6 +17,10 @@ export function parseUsdc(value: Usdc): bigint {
     throw new Error(`USDC amount must be a string, got ${typeof value}`);
   }
   const trimmed = value.trim();
+  // Length cap before the regex/BigInt: avoids a CPU-DoS from a huge all-digit string.
+  if (trimmed.length > 30) {
+    throw new Error("USDC amount is too long");
+  }
   if (!/^\d+(\.\d{1,6})?$/.test(trimmed)) {
     throw new Error(`Invalid USDC amount: "${value}" (expected up to 6 decimals)`);
   }

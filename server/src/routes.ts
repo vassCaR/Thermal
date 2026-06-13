@@ -97,8 +97,10 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
     if (
       typeof auth.fanAccountId !== "string" ||
       typeof auth.creatorId !== "string" ||
-      typeof auth.nonce !== "number" ||
-      typeof auth.ts !== "number"
+      !Number.isInteger(auth.nonce) ||
+      auth.nonce < 0 ||
+      !Number.isInteger(auth.ts) ||
+      auth.ts < 0
     ) {
       return reply.code(400).send({ error: "malformed TipAuthorization" });
     }
