@@ -1,69 +1,107 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { spring } from "@/lib/motion";
 
-/** Right-side slide-in panel with the project's explanatory sections. Controlled by the Header. */
-export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+const ABOUT =
+  "Ghost Tips is a private support platform for content creators and journalists. Back the voices that matter, and keep the link between you and who you support completely anonymous. No one, not even us, can see who you back.";
+const HOW =
+  "Hold to support a creator and you give a tiny amount of USDC every second. Payments are routed privately and settled on Arc; the creator only ever sees an anonymous total. Release to stop. Verified support, invisible to the world.";
+
+function SidebarContent() {
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50"
-          onClick={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+    <div className="flex h-full flex-col gap-7 overflow-y-auto p-5">
+      <div className="font-display text-3xl font-black uppercase leading-[0.95] text-accent">
+        GHOST
+        <br />
+        TIPS
+      </div>
+
+      <section className="space-y-2">
+        <p className="gt-section-label">&#8627; ABOUT US</p>
+        <p className="gt-body">{ABOUT}</p>
+      </section>
+
+      <section className="space-y-2">
+        <p className="gt-section-label">&#8627; HOW IT WORKS</p>
+        <p className="gt-body">{HOW}</p>
+      </section>
+
+      <section className="space-y-2">
+        <p className="gt-section-label">&#8627; LINKS / SOCIAL</p>
+        <a
+          className="gt-frame-link"
+          href="https://github.com/vassCaR/ghost-tips"
+          target="_blank"
+          rel="noreferrer"
         >
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <motion.aside
-            onClick={(e) => e.stopPropagation()}
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={spring}
-            className="absolute right-0 top-0 flex h-full w-80 max-w-[85vw] flex-col gap-6 overflow-y-auto border-l border-ghost-border bg-ghost-panel p-6"
+          GitHub
+        </a>
+        <a
+          className="gt-frame-link"
+          href="https://t.me/vasscar"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Telegram @vasscar
+        </a>
+      </section>
+    </div>
+  );
+}
+
+export function Sidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Desktop: dense fixed column */}
+      <aside className="hidden w-[280px] shrink-0 md:block">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile: hamburger + drawer */}
+      <button
+        aria-label="Open menu"
+        onClick={() => setOpen(true)}
+        className="fixed left-4 top-3 z-40 flex h-10 w-10 flex-col items-center justify-center gap-1.5 border border-border bg-black/80 outline-none backdrop-blur focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+      >
+        <span className="h-0.5 w-5 bg-fg" />
+        <span className="h-0.5 w-5 bg-fg" />
+        <span className="h-0.5 w-5 bg-fg" />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-50 md:hidden"
+            onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-white">Ghost Tips</span>
+            <div className="absolute inset-0 bg-black/60" />
+            <motion.aside
+              onClick={(e) => e.stopPropagation()}
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={spring}
+              className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] border-r border-border bg-bg"
+            >
               <button
                 aria-label="Close menu"
-                onClick={onClose}
-                className="rounded text-ghost-muted outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-ghost-accent"
+                onClick={() => setOpen(false)}
+                className="absolute right-3 top-3 z-10 font-mono text-xs uppercase text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Close
               </button>
-            </div>
-
-            <section className="space-y-2">
-              <h2 className="subtitle text-sm">Who We Are</h2>
-              <p className="gt-body text-sm">
-                Ghost Tips is a private support platform for content creators and
-                journalists. You back the people whose work matters, and the link
-                between you and who you support stays anonymous.
-              </p>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="subtitle text-sm">How to Support</h2>
-              <ol className="gt-body list-decimal space-y-1 pl-5 text-sm">
-                <li>Connect a wallet (no seed phrase needed).</li>
-                <li>Hold the &quot;Support Creators&quot; button; you give a tiny amount every second.</li>
-                <li>Release to stop. The creator receives an anonymous total they can withdraw.</li>
-              </ol>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="subtitle text-sm">Why Privacy</h2>
-              <p className="gt-body text-sm">
-                Supporting a journalist or an activist can be dangerous if it is
-                public. On Ghost Tips, no one, not even us, can reconstruct who
-                supported whom. Verified support, invisible to the world.
-              </p>
-            </section>
-          </motion.aside>
-        </motion.div>
-      )}
-    </AnimatePresence>
+              <SidebarContent />
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

@@ -4,70 +4,102 @@
 
 :root {
   color-scheme: dark;
+
+  /* ---- Design tokens (single source of truth) ---- */
+  --bg: #0a0a0a;
+  --panel: #121212;
+  --accent: #ff4200; /* primary orange */
+  --fg: #ffffff;
+  --muted: #8a8a8a;
+  --border: #2b2b2b;
+
+  /* Display = brutalist grotesque (basement-grotesque, OFL). Swap to Montserrat
+     by changing this var to: var(--font-montserrat), sans-serif */
+  --font-display: var(--font-basement), var(--font-montserrat), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "JetBrains Mono", monospace;
+
+  --space: 1rem;
 }
 
 body {
-  @apply bg-ghost-bg text-ghost-fg antialiased;
-  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  @apply antialiased;
 }
 
 @layer base {
   h1,
   h2,
   h3 {
-    font-family: var(--font-montserrat), sans-serif;
-    /* legibility over the Dither background */
-    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+    font-family: var(--font-display);
   }
 }
 
 @layer components {
-  /* ---- Surfaces ---- */
-  .gt-panel {
-    @apply rounded-2xl border border-ghost-border bg-ghost-panel/70 p-6 shadow-xl shadow-black/20 backdrop-blur-md;
+  /* Brutalist framed button: square corners, hard border, invert-to-orange hover */
+  .gt-brutal-btn {
+    @apply inline-flex select-none items-center justify-center gap-2 border border-fg bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50;
+    border-radius: 0;
   }
 
-  /* ---- Typography roles (single coherent scale) ---- */
-  .gt-title {
-    @apply text-5xl font-extrabold tracking-tight text-white sm:text-6xl;
+  /* Framed sidebar link */
+  .gt-frame-link {
+    @apply block border border-border px-3 py-2 font-mono text-xs uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
+    border-radius: 0;
+  }
+
+  /* "↳ SECTION" label */
+  .gt-section-label {
+    @apply font-mono text-xs uppercase tracking-widest text-accent;
+  }
+
+  .gt-body {
+    @apply font-mono text-xs leading-relaxed text-muted;
+  }
+
+  /* Back-compat for the creator/dashboard pages, brutalist-aligned (square corners) */
+  .gt-panel {
+    @apply border border-border bg-black/60 p-6 backdrop-blur;
+    border-radius: 0;
+  }
+  .subtitle {
+    @apply font-mono text-xs lowercase tracking-wide text-muted;
   }
   .gt-h2 {
-    @apply text-2xl font-bold text-white;
+    @apply font-display text-2xl font-black uppercase text-fg;
   }
-  /* Subtitles / eyebrows: Montserrat, lowercase */
-  .subtitle {
-    @apply lowercase tracking-wide text-ghost-muted;
-  }
-  .gt-body {
-    @apply leading-relaxed text-ghost-muted;
-  }
-
-  /* ---- Buttons ---- */
   .gt-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-ghost-accent px-5 py-3 font-semibold text-white shadow-lg shadow-ghost-accent/30 outline-none transition duration-200 hover:-translate-y-0.5 hover:bg-ghost-accent2 hover:shadow-ghost-accent/50 focus-visible:ring-2 focus-visible:ring-ghost-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ghost-bg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0;
+    @apply inline-flex select-none items-center justify-center gap-2 border border-fg bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50;
+    border-radius: 0;
   }
   .gt-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-ghost-border bg-white/5 px-5 py-3 font-medium text-white outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ghost-accent hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-ghost-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ghost-bg active:translate-y-0;
-  }
-
-  /* Logo: keep it white, add a blue (#3459b5) outline + glow via CSS */
-  .gt-logo {
-    @apply rounded-xl;
-    filter: brightness(1.12);
-    box-shadow:
-      0 0 0 2px #3459b5,
-      0 0 22px rgba(52, 89, 181, 0.55);
+    @apply inline-flex select-none items-center justify-center gap-2 border border-border bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
+    border-radius: 0;
   }
 }
 
-/* Accessibility: respect reduced-motion (also handled in JS via MotionConfig) */
+/* ---- Marquee (CSS only) ---- */
+@keyframes gt-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.gt-marquee-track {
+  animation: gt-marquee 32s linear infinite;
+}
+
+/* Accessibility: stop the marquee + shorten transitions for reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  .gt-marquee-track {
+    animation: none;
+  }
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

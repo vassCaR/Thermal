@@ -2,18 +2,15 @@
 
 import dynamic from "next/dynamic";
 
-// WebGL component → client-only, never SSR'd.
+// WebGL component → client-only, never SSR'd. Fills its (relative) parent.
 const Dither = dynamic(() => import("./Dither/Dither"), { ssr: false });
 
-/**
- * Fond animé Dither (React Bits) plein écran, derrière tout le contenu.
- * Props reprises telles quelles de la config fournie.
- */
+/** Orange halftone/dithering shader, filling the central block. */
 export function DitherBackground() {
   return (
-    <div className="fixed inset-0 z-0" aria-hidden>
+    <div className="absolute inset-0 z-0" aria-hidden>
       <Dither
-        waveColor={[0.20392156862745098, 0.34901960784313724, 0.7098039215686275]}
+        waveColor={[1, 0.25882352941176473, 0]}
         disableAnimation={false}
         enableMouseInteraction={false}
         mouseRadius={0.1}
@@ -23,8 +20,6 @@ export function DitherBackground() {
         waveFrequency={3.7}
         waveSpeed={0.02}
       />
-      {/* Legibility overlay: dims the bright dither peaks so white text stays readable. */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ghost-bg/50 via-ghost-bg/25 to-ghost-bg/70" />
     </div>
   );
 }

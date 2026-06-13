@@ -5,18 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        ghost: {
-          bg: "#18181A", // logo: dark square
-          panel: "#1F1F21", // logo: dominant charcoal
-          border: "#2E2E31",
-          accent: "#3459b5", // blue — matches the Dither + logo stroke
-          accent2: "#5B7FD4", // lighter blue (gradients/hover)
-          muted: "#8A8A90",
-          fg: "#FFFFFF",
-        },
+        // Mapped to the CSS tokens in globals.css (single source of truth).
+        bg: "var(--bg)",
+        panel: "var(--panel)",
+        accent: "var(--accent)",
+        fg: "var(--fg)",
+        muted: "var(--muted)",
+        border: "var(--border)",
       },
       fontFamily: {
-        montserrat: ["var(--font-montserrat)", "sans-serif"],
+        display: ["var(--font-display)"],
+        mono: ["var(--font-mono)"],
       },
     },
   },
