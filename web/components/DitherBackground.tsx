@@ -15,7 +15,7 @@ export function DitherBackground() {
       <Dither
         waveColor={[0.20392156862745098, 0.34901960784313724, 0.7098039215686275]}
         disableAnimation={false}
-        enableMouseInteraction={true}
+        enableMouseInteraction={false}
         mouseRadius={0.1}
         colorNum={4.5}
         pixelSize={2}

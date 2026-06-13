@@ -179,7 +179,7 @@ function DitheredWaves({
 }) {
   const mesh = useRef(null);
   const mouseRef = useRef(new THREE.Vector2());
-  const { viewport, size, gl } = useThree();
+  const { viewport, size, gl, invalidate } = useThree();
 
   const waveUniformsRef = useRef({
     time: new THREE.Uniform(0),
@@ -203,19 +203,21 @@ function DitheredWaves({
     }
   }, [size, gl]);
 
-  // Track the mouse at the WINDOW level so the ripple reacts everywhere, even
-  // where DOM content sits above the canvas (the canvas itself never receives
-  // those pointer events because it is behind the page content).
+  // Drive the wave animation with our own rAF loop + invalidate(), independent of
+  // R3F's useFrame (which does not tick reliably here under React 19 / Next dev).
+  // This advances the `time` uniform every frame so the waves move on their own.
   useEffect(() => {
-    if (!enableMouseInteraction) return;
-    const onPointerMove = e => {
-      const rect = gl.domElement.getBoundingClientRect();
-      const dpr = gl.getPixelRatio();
-      mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
+    if (disableAnimation) return;
+    let raf = 0;
+    const start = performance.now();
+    const tick = () => {
+      waveUniformsRef.current.time.value = (performance.now() - start) / 1000;
+      invalidate();
+      raf = requestAnimationFrame(tick);
     };
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onPointerMove);
-  }, [enableMouseInteraction, gl]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [disableAnimation, invalidate]);
 
   const prevColor = useRef([...waveColor]);
   useFrame(({ clock }) => {
