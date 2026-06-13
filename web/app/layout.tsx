@@ -41,7 +41,7 @@ export default function RootLayout({
             <main className="relative flex min-h-screen flex-1 flex-col overflow-hidden border-l border-border">
               <DitherBackground />
               {/* legibility veil over the shader */}
-              <div className="pointer-events-none absolute inset-0 z-[1] bg-black/45" />
+              <div className="pointer-events-none absolute inset-0 z-[1] bg-black/30" />
               <TopMarquee />
               <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-16">
                 {children}

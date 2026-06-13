@@ -18,7 +18,7 @@ export function DitherBackground() {
         pixelSize={2}
         waveAmplitude={0.39}
         waveFrequency={3.7}
-        waveSpeed={0.08}
+        waveSpeed={0.4}
       />
     </div>
   );
