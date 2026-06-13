@@ -179,7 +179,7 @@ function DitheredWaves({
 }) {
   const mesh = useRef(null);
   const mouseRef = useRef(new THREE.Vector2());
-  const { viewport, size, gl, invalidate } = useThree();
+  const { viewport, size, gl } = useThree();
 
   const waveUniformsRef = useRef({
     time: new THREE.Uniform(0),
@@ -202,28 +202,6 @@ function DitheredWaves({
       res.set(w, h);
     }
   }, [size, gl]);
-
-  // Drive the wave animation with our own rAF loop + invalidate(), independent of
-  // R3F's useFrame (which does not tick reliably here under React 19 / Next dev).
-  // This advances the `time` uniform every frame so the waves move on their own.
-  useEffect(() => {
-    if (disableAnimation) return;
-    let raf = 0;
-    const start = performance.now();
-    const tick = () => {
-      const u = waveUniformsRef.current;
-      u.time.value = (performance.now() - start) / 1000;
-      if (enableMouseInteraction) {
-        u.enableMouseInteraction.value = 1;
-        u.mouseRadius.value = mouseRadius;
-        u.mousePos.value.copy(mouseRef.current);
-      }
-      invalidate();
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [disableAnimation, invalidate, enableMouseInteraction, mouseRadius]);
 
   // Track the mouse at the window level so the ripple is felt across the whole
   // central block, even where content sits above the canvas.
@@ -312,6 +290,7 @@ export default function Dither({
   return (
     <Canvas
       className="dither-container"
+      frameloop="always"
       camera={{ position: [0, 0, 6] }}
       dpr={1}
       gl={{ antialias: true, preserveDrawingBuffer: true }}

@@ -39,7 +39,7 @@ body {
 @layer components {
   /* Brutalist framed button: square corners, hard border, invert-to-orange hover */
   .gt-brutal-btn {
-    @apply inline-flex select-none items-center justify-center gap-2 border border-fg bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
+    @apply inline-flex select-none items-center justify-center gap-2 border-2 border-fg bg-transparent px-8 py-5 font-mono text-lg uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
     border-radius: 0;
   }
 
