@@ -211,13 +211,32 @@ function DitheredWaves({
     let raf = 0;
     const start = performance.now();
     const tick = () => {
-      waveUniformsRef.current.time.value = (performance.now() - start) / 1000;
+      const u = waveUniformsRef.current;
+      u.time.value = (performance.now() - start) / 1000;
+      if (enableMouseInteraction) {
+        u.enableMouseInteraction.value = 1;
+        u.mouseRadius.value = mouseRadius;
+        u.mousePos.value.copy(mouseRef.current);
+      }
       invalidate();
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [disableAnimation, invalidate]);
+  }, [disableAnimation, invalidate, enableMouseInteraction, mouseRadius]);
+
+  // Track the mouse at the window level so the ripple is felt across the whole
+  // central block, even where content sits above the canvas.
+  useEffect(() => {
+    if (!enableMouseInteraction) return;
+    const onPointerMove = (e) => {
+      const rect = gl.domElement.getBoundingClientRect();
+      const dpr = gl.getPixelRatio();
+      mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, [enableMouseInteraction, gl]);
 
   const prevColor = useRef([...waveColor]);
   useFrame(({ clock }) => {

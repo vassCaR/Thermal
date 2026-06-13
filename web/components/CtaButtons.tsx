@@ -104,7 +104,7 @@ export function CtaButtons() {
         </button>
         <ConnectButton />
       </div>
-      <p className="font-mono text-xs uppercase tracking-wide text-muted">
+      <p className="font-mono text-sm uppercase tracking-wide text-muted">
         supported so far:{" "}
         <span data-testid="supported-total" className="text-accent">
           {spent} USDC

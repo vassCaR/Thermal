@@ -39,19 +39,19 @@ body {
 @layer components {
   /* Brutalist framed button: square corners, hard border, invert-to-orange hover */
   .gt-brutal-btn {
-    @apply inline-flex select-none items-center justify-center gap-2 border border-fg bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex select-none items-center justify-center gap-2 border border-fg bg-transparent px-6 py-3 font-mono text-sm uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
     border-radius: 0;
   }
 
   /* Framed sidebar link */
   .gt-frame-link {
-    @apply block border border-border px-3 py-2 font-mono text-xs uppercase tracking-wide text-fg outline-none transition-colors duration-150 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
+    @apply flex items-center justify-between gap-2 border border-border px-3 py-2 font-mono text-[15px] uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
     border-radius: 0;
   }
 
   /* "↳ SECTION" label */
   .gt-section-label {
-    @apply font-mono text-xs uppercase tracking-widest text-accent;
+    @apply font-mono text-[15px] uppercase tracking-widest text-accent;
   }
 
   .gt-body {

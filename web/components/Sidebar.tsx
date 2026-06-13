@@ -12,20 +12,28 @@ const HOW =
 function SidebarContent() {
   return (
     <div className="flex h-full flex-col gap-7 overflow-y-auto p-5">
-      <div className="font-display text-3xl font-black uppercase leading-[0.95] text-accent">
-        GHOST
-        <br />
-        TIPS
+      <div className="space-y-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo_ghost_tips.svg"
+          alt="Ghost Tips"
+          className="h-12 w-12 border border-border"
+        />
+        <div className="font-display text-3xl font-black uppercase leading-[0.95] text-accent">
+          GHOST
+          <br />
+          TIPS
+        </div>
       </div>
 
       <section className="space-y-2">
         <p className="gt-section-label">&#8627; ABOUT US</p>
-        <p className="gt-body">{ABOUT}</p>
+        <p className="gt-body text-[15px]">{ABOUT}</p>
       </section>
 
       <section className="space-y-2">
         <p className="gt-section-label">&#8627; HOW IT WORKS</p>
-        <p className="gt-body">{HOW}</p>
+        <p className="gt-body text-[15px]">{HOW}</p>
       </section>
 
       <section className="space-y-2">
@@ -36,7 +44,8 @@ function SidebarContent() {
           target="_blank"
           rel="noreferrer"
         >
-          GitHub
+          <span>GitHub</span>
+          <span aria-hidden>&rarr;</span>
         </a>
         <a
           className="gt-frame-link"
@@ -44,7 +53,8 @@ function SidebarContent() {
           target="_blank"
           rel="noreferrer"
         >
-          Telegram @vasscar
+          <span>Telegram</span>
+          <span aria-hidden>&rarr;</span>
         </a>
       </section>
     </div>
