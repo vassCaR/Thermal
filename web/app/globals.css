@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ghost-bg text-ghost-fg antialiased;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-montserrat), sans-serif;
+  }
+}
+
+@layer components {
+  .gt-panel {
+    @apply rounded-2xl border border-ghost-border bg-ghost-panel/70 p-6 backdrop-blur-md;
+  }
+
+  /* Subtitles: Montserrat, lowercase */
+  .subtitle {
+    @apply lowercase tracking-wide text-ghost-muted;
+    font-family: var(--font-montserrat), sans-serif;
+  }
+
+  .gt-btn {
+    @apply rounded-xl bg-ghost-accent px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-ghost-accent2 hover:shadow-lg hover:shadow-ghost-accent/40 active:translate-y-0 disabled:opacity-40;
+    font-family: var(--font-montserrat), sans-serif;
+  }
+
+  .gt-btn-ghost {
+    @apply rounded-xl border border-ghost-border bg-white/5 px-5 py-3 font-medium text-white transition duration-200 hover:-translate-y-0.5 hover:border-ghost-accent hover:bg-white/10;
+    font-family: var(--font-montserrat), sans-serif;
+  }
+
+  /* Logo: keep it white, add a blue (#3459b5) outline + glow via CSS */
+  .gt-logo {
+    @apply rounded-xl;
+    filter: brightness(1.12);
+    box-shadow:
+      0 0 0 2px #3459b5,
+      0 0 22px rgba(52, 89, 181, 0.55);
+  }
+}

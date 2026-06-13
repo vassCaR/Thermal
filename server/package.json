@@ -1,0 +1,29 @@
+{
+  "name": "ghost-tips-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ghost Tips backend — private USDC nanopayments (Dynamic + Unlink + Arc/Circle).",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server/src/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@unlink-xyz/sdk": "0.3.0-canary.598",
+    "fastify": "^5.1.0",
+    "pino-pretty": "^13.0.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

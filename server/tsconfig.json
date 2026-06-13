@@ -1,0 +1,35 @@
+{
+  // Ghost Tips server — ESM, Node 22.
+  //
+  // NOTE on the cross-root import of ../shared/api.ts:
+  //   The shared API contract lives OUTSIDE /server (in /shared/api.ts) and is the
+  //   single source of truth shared with /web. We must NOT copy or redefine it.
+  //   To make `import ... from "../shared/api.js"` compile, we set rootDir to the
+  //   repo root ("..") and include ../shared. tsc then emits:
+  //       dist/server/src/*.js   (our code)
+  //       dist/shared/api.js     (the shared contract)
+  //   ...preserving the relative "../shared/api.js" import at runtime.
+  //   That is why `npm start` runs dist/server/src/index.js.
+  //
+  //   In dev we use tsx, which executes the .ts directly and resolves the
+  //   relative import with no build step.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "rootDir": "..",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true,
+    "verbatimModuleSyntax": false,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "../shared/**/*.ts"],
+  "exclude": ["node_modules", "dist", "scripts"]
+}
