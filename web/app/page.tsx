@@ -1,149 +1,160 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { ConnectButton } from "@/components/ConnectButton";
 import { useWalletAddress } from "@/lib/wallet";
 import { api } from "@/lib/client";
-import { container, fadeUp } from "@/lib/motion";
+import { signTip } from "@/lib/tip";
+import { container, fadeUp, spring } from "@/lib/motion";
 
-const MotionLink = motion.create(Link);
+const FEATURED_CREATOR = "ghost:alice";
+const TICK_AMOUNT = "0.002000"; // USDC per second
+const DEMO_FUNDING = "100.000000"; // auto-funded once so the demo never hits "insufficient funds"
 
 export default function Home() {
   const address = useWalletAddress();
-  const [fanAccountId, setFanAccountId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [supporting, setSupporting] = useState(false);
+  const [spent, setSpent] = useState("0.000000");
+
+  const fanRef = useRef<string | null>(null);
+  const fundedRef = useRef(false);
+  const nonceRef = useRef(0);
+  const holdingRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setFanAccountId(localStorage.getItem("gt_fanAccountId"));
+    fanRef.current = localStorage.getItem("gt_fanAccountId");
   }, []);
 
-  async function becomeFan() {
-    setBusy(true);
-    try {
+  // Make sure we have a private account + some balance before the first tick.
+  const ensureReady = useCallback(async () => {
+    let fan = fanRef.current;
+    if (!fan) {
       const { fanAccountId } = await api.onboard({ dynamicAddress: address });
+      fan = fanAccountId;
+      fanRef.current = fanAccountId;
       localStorage.setItem("gt_fanAccountId", fanAccountId);
-      setFanAccountId(fanAccountId);
+    }
+    if (!fundedRef.current) {
+      await api.deposit({ fanAccountId: fan, amount: DEMO_FUNDING });
+      fundedRef.current = true;
+    }
+    return fan;
+  }, [address]);
+
+  const tick = useCallback(async () => {
+    const fan = fanRef.current;
+    if (!fan) return;
+    nonceRef.current += 1;
+    const auth = await signTip({
+      fanAccountId: fan,
+      creatorId: FEATURED_CREATOR,
+      amount: TICK_AMOUNT,
+      nonce: nonceRef.current,
+      ts: Date.now(),
+    });
+    try {
+      await api.tip(auth);
+      const r = await api.meSpent(fan);
+      setSpent(r.total);
     } catch (e) {
       console.error(e);
-      alert("Onboarding failed — is the server (:8787) running?");
-    } finally {
-      setBusy(false);
+    }
+  }, []);
+
+  async function startSupport() {
+    if (holdingRef.current) return;
+    holdingRef.current = true;
+    setSupporting(true);
+    try {
+      await ensureReady();
+    } catch (e) {
+      console.error(e);
+      holdingRef.current = false;
+      setSupporting(false);
+      alert("Could not start support — is the server (:8787) running?");
+      return;
+    }
+    if (!holdingRef.current) return; // released during setup
+    void tick();
+    timerRef.current = setInterval(() => void tick(), 1000);
+  }
+
+  function stopSupport() {
+    holdingRef.current = false;
+    setSupporting(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
   }
 
+  useEffect(() => () => stopSupport(), []);
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-10 px-6 py-20">
-      {/* HERO */}
-      <motion.header
+    <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="space-y-4"
+        className="max-w-3xl space-y-8"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <motion.img
+        <motion.h1
           variants={fadeUp}
-          src="/logo_ghost_tips.svg"
-          alt="Ghost Tips"
-          className="gt-logo h-14 w-14"
-        />
-        <motion.h1 variants={fadeUp} className="gt-title">
-          Ghost Tips
+          className="text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-7xl"
+        >
+          Support who matters.
+          <br />
+          <span className="text-ghost-accent2">Anonymously.</span>
         </motion.h1>
-        <motion.p variants={fadeUp} className="subtitle text-lg">
-          support anyone, by the second — without anyone knowing it&apos;s you.
+
+        <motion.p variants={fadeUp} className="mx-auto max-w-xl text-lg text-ghost-fg/80">
+          Per-second support for creators and journalists. The link between you and
+          who you support stays private.
         </motion.p>
-      </motion.header>
 
-      <motion.section
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="gt-panel space-y-4"
-      >
-        <h2 className="subtitle text-sm">1 · your wallet</h2>
-        <ConnectButton />
-      </motion.section>
-
-      <motion.section
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="gt-panel space-y-4"
-      >
-        <h2 className="subtitle text-sm">2 · become a fan (private)</h2>
-        {fanAccountId ? (
-          <p className="text-sm text-ghost-accent2">
-            Private account ready: <code className="text-ghost-muted">{fanAccountId}</code>
-          </p>
-        ) : (
+        <motion.div variants={fadeUp} className="flex flex-col items-center gap-3 pt-2">
           <motion.button
-            whileHover={{ y: -2 }}
+            onPointerDown={startSupport}
+            onPointerUp={stopSupport}
+            onPointerLeave={stopSupport}
             whileTap={{ scale: 0.97 }}
-            className="gt-btn"
-            onClick={becomeFan}
-            disabled={busy}
+            animate={supporting ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+            transition={
+              supporting ? { duration: 1, repeat: Infinity, ease: "easeInOut" } : spring
+            }
+            className="gt-btn select-none px-10 py-5 text-lg"
+            data-testid="support-creators"
           >
-            {busy ? "Creating…" : "Create my private account"}
+            {supporting ? "Supporting… (release to stop)" : "Support Creators — hold"}
           </motion.button>
-        )}
-      </motion.section>
 
-      <section className="flex flex-wrap gap-3">
-        <MotionLink
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          className="gt-btn-ghost"
-          href="/creator/ghost:alice"
-        >
-          View a Creator
-        </MotionLink>
-        <MotionLink
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          className="gt-btn-ghost"
-          href="/dashboard?id=ghost:alice"
-        >
-          Creator Dashboard
-        </MotionLink>
-      </section>
+          <p className="text-sm text-ghost-muted">
+            supported so far:{" "}
+            <motion.span
+              key={spent}
+              initial={{ scale: 1.25 }}
+              animate={{ scale: 1 }}
+              transition={spring}
+              data-testid="supported-total"
+              className="inline-block font-mono text-green-400"
+            >
+              {spent} USDC
+            </motion.span>
+          </p>
+          <p className="text-xs text-ghost-muted">Nobody can see that it&apos;s you.</p>
+        </motion.div>
 
-      {/* ABOUT US */}
-      <motion.section
-        id="about"
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.3 }}
-        className="gt-panel scroll-mt-24 space-y-3"
-      >
-        <h2 className="gt-h2">About Us</h2>
-        <p className="gt-body">
-          Ghost Tips lets you support creators and activists with per-second USDC
-          tips — while keeping who-supports-whom completely private. Nobody can
-          reconstruct the link between a fan and a creator on-chain.
-        </p>
-      </motion.section>
-
-      {/* HOW IT WORKS */}
-      <motion.section
-        id="how-it-works"
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.3 }}
-        className="gt-panel scroll-mt-24 space-y-3"
-      >
-        <h2 className="gt-h2">How It Works</h2>
-        <ol className="gt-body list-decimal space-y-1 pl-5">
-          <li>Connect a wallet (no seed phrase) and create a private account.</li>
-          <li>Hold to support a creator — you tip a tiny amount every second.</li>
-          <li>Payments are routed privately and settled on Arc.</li>
-          <li>The creator only sees an anonymous total they can withdraw.</li>
-        </ol>
-      </motion.section>
+        <motion.div variants={fadeUp} className="pt-4">
+          <Link
+            href="/dashboard?id=ghost:alice"
+            className="text-sm text-ghost-muted underline-offset-4 transition hover:text-white hover:underline"
+          >
+            See the creator&apos;s anonymous total &rarr;
+          </Link>
+        </motion.div>
+      </motion.div>
     </main>
   );
 }

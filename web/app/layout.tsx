@@ -3,8 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { DitherBackground } from "@/components/DitherBackground";
-import { Sidebar } from "@/components/Sidebar";
-import { FloatingDeposit } from "@/components/FloatingDeposit";
+import { Header } from "@/components/Header";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -14,7 +13,8 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: "Ghost Tips",
-  description: "Support anyone, by the second — without anyone knowing it's you.",
+  description:
+    "Support who matters. Anonymously. Per-second, private support for creators and journalists.",
 };
 
 export default function RootLayout({
@@ -26,11 +26,10 @@ export default function RootLayout({
     <html lang="en" className={montserrat.variable}>
       <body className="relative min-h-screen">
         <DitherBackground />
-        <Sidebar />
-        <div className="relative z-10">
-          <Providers>{children}</Providers>
-        </div>
-        <FloatingDeposit />
+        <Providers>
+          <Header />
+          <div className="relative z-10">{children}</div>
+        </Providers>
       </body>
     </html>
   );
