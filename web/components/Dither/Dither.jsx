@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react/no-unknown-property */
 import { useRef, useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import "./Dither.css";
@@ -150,7 +150,9 @@ function DitheredWaves({
 }) {
   const meshRef = useRef(null);
   const mouseRef = useRef(new THREE.Vector2(0, 0));
-  const { gl, scene, camera, size, viewport } = useThree();
+  const startRef = useRef(0);
+  const prevColorRef = useRef([...waveColor]);
+  const { gl, size, viewport } = useThree();
 
   // Latest props in a ref so the rAF loop always reads current values without
   // restarting on every prop change.
@@ -202,47 +204,43 @@ function DitheredWaves({
     return () => window.removeEventListener("pointermove", onPointerMove);
   }, [gl]);
 
-  // Component-owned render loop. Immune to R3F's internal loop lifecycle, so a
-  // StrictMode double-mount or a Fast Refresh re-mount cannot freeze the canvas.
-  useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const prevColor = [...waveColor];
+  // Canonical R3F render loop: frameloop="always" calls this every frame and R3F
+  // renders the scene itself (no EffectComposer, no manual gl.render). We only
+  // push the latest prop values into the uniforms here.
+  useFrame(({ clock }) => {
+    const u = uniformsRef.current;
+    const p = propsRef.current;
 
-    const tick = () => {
-      const u = uniformsRef.current;
-      const p = propsRef.current;
+    if (startRef.current === 0) startRef.current = clock.getElapsedTime();
+    if (!p.disableAnimation) {
+      u.time.value = clock.getElapsedTime() - startRef.current;
+    }
 
-      if (!p.disableAnimation) {
-        u.time.value = (performance.now() - start) / 1000;
-      }
-      u.waveSpeed.value = p.waveSpeed;
-      u.waveFrequency.value = p.waveFrequency;
-      u.waveAmplitude.value = p.waveAmplitude;
-      u.colorNum.value = p.colorNum;
-      u.pixelSize.value = p.pixelSize;
-      u.mouseRadius.value = p.mouseRadius;
-      u.enableMouseInteraction.value = p.enableMouseInteraction ? 1 : 0;
+    // Diagnostic: lets us read the loop state from the browser console.
+    if (typeof window !== "undefined") {
+      window.__dither = window.__dither || {};
+      window.__dither.tick = (window.__dither.tick || 0) + 1;
+      window.__dither.time = u.time.value;
+    }
 
-      if (!prevColor.every((v, i) => v === p.waveColor[i])) {
-        u.waveColor.value.set(...p.waveColor);
-        prevColor[0] = p.waveColor[0];
-        prevColor[1] = p.waveColor[1];
-        prevColor[2] = p.waveColor[2];
-      }
+    u.waveSpeed.value = p.waveSpeed;
+    u.waveFrequency.value = p.waveFrequency;
+    u.waveAmplitude.value = p.waveAmplitude;
+    u.colorNum.value = p.colorNum;
+    u.pixelSize.value = p.pixelSize;
+    u.mouseRadius.value = p.mouseRadius;
+    u.enableMouseInteraction.value = p.enableMouseInteraction ? 1 : 0;
 
-      if (p.enableMouseInteraction) {
-        u.mousePos.value.copy(mouseRef.current);
-      }
+    const prevColor = prevColorRef.current;
+    if (!prevColor.every((v, i) => v === p.waveColor[i])) {
+      u.waveColor.value.set(...p.waveColor);
+      prevColorRef.current = [...p.waveColor];
+    }
 
-      gl.render(scene, camera);
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gl, scene, camera]);
+    if (p.enableMouseInteraction) {
+      u.mousePos.value.copy(mouseRef.current);
+    }
+  });
 
   return (
     <mesh ref={meshRef} scale={[viewport.width, viewport.height, 1]}>
@@ -271,7 +269,7 @@ export default function Dither({
   return (
     <Canvas
       className="dither-container"
-      frameloop="never"
+      frameloop="always"
       camera={{ position: [0, 0, 6] }}
       dpr={1}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
