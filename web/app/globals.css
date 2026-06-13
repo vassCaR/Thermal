@@ -8,6 +8,7 @@
 
 body {
   @apply bg-ghost-bg text-ghost-fg antialiased;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -15,28 +16,38 @@ body {
   h2,
   h3 {
     font-family: var(--font-montserrat), sans-serif;
+    /* legibility over the Dither background */
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
   }
 }
 
 @layer components {
+  /* ---- Surfaces ---- */
   .gt-panel {
-    @apply rounded-2xl border border-ghost-border bg-ghost-panel/70 p-6 backdrop-blur-md;
+    @apply rounded-2xl border border-ghost-border bg-ghost-panel/70 p-6 shadow-xl shadow-black/20 backdrop-blur-md;
   }
 
-  /* Subtitles: Montserrat, lowercase */
+  /* ---- Typography roles (single coherent scale) ---- */
+  .gt-title {
+    @apply text-5xl font-extrabold tracking-tight text-white sm:text-6xl;
+  }
+  .gt-h2 {
+    @apply text-2xl font-bold text-white;
+  }
+  /* Subtitles / eyebrows: Montserrat, lowercase */
   .subtitle {
     @apply lowercase tracking-wide text-ghost-muted;
-    font-family: var(--font-montserrat), sans-serif;
+  }
+  .gt-body {
+    @apply leading-relaxed text-ghost-muted;
   }
 
+  /* ---- Buttons ---- */
   .gt-btn {
-    @apply rounded-xl bg-ghost-accent px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-ghost-accent2 hover:shadow-lg hover:shadow-ghost-accent/40 active:translate-y-0 disabled:opacity-40;
-    font-family: var(--font-montserrat), sans-serif;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-ghost-accent px-5 py-3 font-semibold text-white shadow-lg shadow-ghost-accent/30 outline-none transition duration-200 hover:-translate-y-0.5 hover:bg-ghost-accent2 hover:shadow-ghost-accent/50 focus-visible:ring-2 focus-visible:ring-ghost-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ghost-bg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0;
   }
-
   .gt-btn-ghost {
-    @apply rounded-xl border border-ghost-border bg-white/5 px-5 py-3 font-medium text-white transition duration-200 hover:-translate-y-0.5 hover:border-ghost-accent hover:bg-white/10;
-    font-family: var(--font-montserrat), sans-serif;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-ghost-border bg-white/5 px-5 py-3 font-medium text-white outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ghost-accent hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-ghost-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ghost-bg active:translate-y-0;
   }
 
   /* Logo: keep it white, add a blue (#3459b5) outline + glow via CSS */
@@ -46,5 +57,17 @@ body {
     box-shadow:
       0 0 0 2px #3459b5,
       0 0 22px rgba(52, 89, 181, 0.55);
+  }
+}
+
+/* Accessibility: respect reduced-motion (also handled in JS via MotionConfig) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -23,6 +23,8 @@ export function DitherBackground() {
         waveFrequency={3.7}
         waveSpeed={0.01}
       />
+      {/* Legibility overlay: dims the bright dither peaks so white text stays readable. */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ghost-bg/50 via-ghost-bg/25 to-ghost-bg/70" />
     </div>
   );
 }
