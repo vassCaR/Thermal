@@ -1,26 +1,32 @@
 "use client";
 /* eslint-disable react/no-unknown-property */
-import { useRef, useEffect, forwardRef } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { EffectComposer, wrapEffect } from '@react-three/postprocessing';
-import { Effect } from 'postprocessing';
-import * as THREE from 'three';
+import { useRef, useEffect } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 
-import './Dither.css';
+import "./Dither.css";
 
-const waveVertexShader = `
-precision highp float;
-varying vec2 vUv;
+// Single-pass dithered waves. The original React Bits version rendered the wave
+// to a texture and applied an ordered-dither post-process via
+// @react-three/postprocessing's EffectComposer. That composer takes over R3F's
+// render loop through a priority useFrame, and that takeover does NOT survive
+// dev re-mounts (StrictMode double-mount / Fast Refresh) — the loop dies and the
+// canvas freezes on its first frame. Here the wave + Bayer dither are merged into
+// one fullscreen fragment shader and driven by a component-owned rAF loop that
+// calls gl.render() directly, so animation is immune to R3F loop lifecycle.
+
+const vertexShader = /* glsl */ `
+out vec2 vUv;
 void main() {
   vUv = uv;
-  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-  vec4 viewPosition = viewMatrix * modelPosition;
-  gl_Position = projectionMatrix * viewPosition;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
 
-const waveFragmentShader = `
+const fragmentShader = /* glsl */ `
 precision highp float;
+out vec4 fragColor;
+
 uniform vec2 resolution;
 uniform float time;
 uniform float waveSpeed;
@@ -30,6 +36,8 @@ uniform vec3 waveColor;
 uniform vec2 mousePos;
 uniform int enableMouseInteraction;
 uniform float mouseRadius;
+uniform float colorNum;
+uniform float pixelSize;
 
 vec4 mod289(vec4 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -79,30 +87,9 @@ float fbm(vec2 p) {
 
 float pattern(vec2 p) {
   vec2 p2 = p - time * waveSpeed;
-  return fbm(p + fbm(p2)); 
+  return fbm(p + fbm(p2));
 }
 
-void main() {
-  vec2 uv = gl_FragCoord.xy / resolution.xy;
-  uv -= 0.5;
-  uv.x *= resolution.x / resolution.y;
-  float f = pattern(uv);
-  if (enableMouseInteraction == 1) {
-    vec2 mouseNDC = (mousePos / resolution - 0.5) * vec2(1.0, -1.0);
-    mouseNDC.x *= resolution.x / resolution.y;
-    float dist = length(uv - mouseNDC);
-    float effect = 1.0 - smoothstep(0.0, mouseRadius, dist);
-    f -= 0.5 * effect;
-  }
-  vec3 col = mix(vec3(0.0), waveColor, f);
-  gl_FragColor = vec4(col, 1.0);
-}
-`;
-
-const ditherFragmentShader = `
-precision highp float;
-uniform float colorNum;
-uniform float pixelSize;
 const float bayerMatrix8x8[64] = float[64](
   0.0/64.0, 48.0/64.0, 12.0/64.0, 60.0/64.0,  3.0/64.0, 51.0/64.0, 15.0/64.0, 63.0/64.0,
   32.0/64.0,16.0/64.0, 44.0/64.0, 28.0/64.0, 35.0/64.0,19.0/64.0, 47.0/64.0, 31.0/64.0,
@@ -114,8 +101,8 @@ const float bayerMatrix8x8[64] = float[64](
   42.0/64.0,26.0/64.0, 38.0/64.0, 22.0/64.0, 41.0/64.0,25.0/64.0, 37.0/64.0, 21.0/64.0
 );
 
-vec3 dither(vec2 uv, vec3 color) {
-  vec2 scaledCoord = floor(uv * resolution / pixelSize);
+vec3 dither(vec2 fragCoord, vec3 color) {
+  vec2 scaledCoord = floor(fragCoord / pixelSize);
   int x = int(mod(scaledCoord.x, 8.0));
   int y = int(mod(scaledCoord.y, 8.0));
   float threshold = bayerMatrix8x8[y * 8 + x] - 0.25;
@@ -126,45 +113,29 @@ vec3 dither(vec2 uv, vec3 color) {
   return floor(color * (colorNum - 1.0) + 0.5) / (colorNum - 1.0);
 }
 
-void mainImage(in vec4 inputColor, in vec2 uv, out vec4 outputColor) {
-  vec2 normalizedPixelSize = pixelSize / resolution;
-  vec2 uvPixel = normalizedPixelSize * floor(uv / normalizedPixelSize);
-  vec4 color = texture2D(inputBuffer, uvPixel);
-  color.rgb = dither(uv, color.rgb);
-  outputColor = color;
+void main() {
+  vec2 fragCoord = gl_FragCoord.xy;
+  // pixelate the sampling coordinate (matches the original post-process pass)
+  vec2 pixelCoord = (floor(fragCoord / pixelSize) + 0.5) * pixelSize;
+  vec2 uv = pixelCoord / resolution.xy;
+  uv -= 0.5;
+  uv.x *= resolution.x / resolution.y;
+
+  float f = pattern(uv);
+
+  if (enableMouseInteraction == 1) {
+    vec2 mouseNDC = (mousePos / resolution - 0.5) * vec2(1.0, -1.0);
+    mouseNDC.x *= resolution.x / resolution.y;
+    float dist = length(uv - mouseNDC);
+    float effect = 1.0 - smoothstep(0.0, mouseRadius, dist);
+    f -= 0.5 * effect;
+  }
+
+  vec3 col = mix(vec3(0.0), waveColor, f);
+  col = dither(fragCoord, col);
+  fragColor = vec4(col, 1.0);
 }
 `;
-
-class RetroEffectImpl extends Effect {
-  constructor() {
-    const uniforms = new Map([
-      ['colorNum', new THREE.Uniform(4.0)],
-      ['pixelSize', new THREE.Uniform(2.0)]
-    ]);
-    super('RetroEffect', ditherFragmentShader, { uniforms });
-    this.uniforms = uniforms;
-  }
-  set colorNum(v) {
-    this.uniforms.get('colorNum').value = v;
-  }
-  get colorNum() {
-    return this.uniforms.get('colorNum').value;
-  }
-  set pixelSize(v) {
-    this.uniforms.get('pixelSize').value = v;
-  }
-  get pixelSize() {
-    return this.uniforms.get('pixelSize').value;
-  }
-}
-
-const WrappedRetro = wrapEffect(RetroEffectImpl);
-
-const RetroEffect = forwardRef((props, ref) => {
-  const { colorNum, pixelSize } = props;
-  return <WrappedRetro ref={ref} colorNum={colorNum} pixelSize={pixelSize} />;
-});
-RetroEffect.displayName = 'RetroEffect';
 
 function DitheredWaves({
   waveSpeed,
@@ -175,13 +146,28 @@ function DitheredWaves({
   pixelSize,
   disableAnimation,
   enableMouseInteraction,
-  mouseRadius
+  mouseRadius,
 }) {
-  const mesh = useRef(null);
-  const mouseRef = useRef(new THREE.Vector2());
-  const { viewport, size, gl } = useThree();
+  const meshRef = useRef(null);
+  const mouseRef = useRef(new THREE.Vector2(0, 0));
+  const { gl, scene, camera, size, viewport } = useThree();
 
-  const waveUniformsRef = useRef({
+  // Latest props in a ref so the rAF loop always reads current values without
+  // restarting on every prop change.
+  const propsRef = useRef({});
+  propsRef.current = {
+    waveSpeed,
+    waveFrequency,
+    waveAmplitude,
+    waveColor,
+    colorNum,
+    pixelSize,
+    disableAnimation,
+    enableMouseInteraction,
+    mouseRadius,
+  };
+
+  const uniformsRef = useRef({
     time: new THREE.Uniform(0),
     resolution: new THREE.Uniform(new THREE.Vector2(0, 0)),
     waveSpeed: new THREE.Uniform(waveSpeed),
@@ -190,89 +176,84 @@ function DitheredWaves({
     waveColor: new THREE.Uniform(new THREE.Color(...waveColor)),
     mousePos: new THREE.Uniform(new THREE.Vector2(0, 0)),
     enableMouseInteraction: new THREE.Uniform(enableMouseInteraction ? 1 : 0),
-    mouseRadius: new THREE.Uniform(mouseRadius)
+    mouseRadius: new THREE.Uniform(mouseRadius),
+    colorNum: new THREE.Uniform(colorNum),
+    pixelSize: new THREE.Uniform(pixelSize),
   });
 
+  // Keep resolution in sync with the drawing buffer.
   useEffect(() => {
     const dpr = gl.getPixelRatio();
-    const w = Math.floor(size.width * dpr),
-      h = Math.floor(size.height * dpr);
-    const res = waveUniformsRef.current.resolution.value;
-    if (res.x !== w || res.y !== h) {
-      res.set(w, h);
-    }
+    const w = Math.floor(size.width * dpr);
+    const h = Math.floor(size.height * dpr);
+    uniformsRef.current.resolution.value.set(w, h);
   }, [size, gl]);
 
-  // Track the mouse at the window level so the ripple is felt across the whole
+  // Track the pointer at the window level so the ripple is felt across the whole
   // central block, even where content sits above the canvas.
   useEffect(() => {
-    if (!enableMouseInteraction) return;
     const onPointerMove = (e) => {
+      if (!propsRef.current.enableMouseInteraction) return;
       const rect = gl.domElement.getBoundingClientRect();
       const dpr = gl.getPixelRatio();
       mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
     };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     return () => window.removeEventListener("pointermove", onPointerMove);
-  }, [enableMouseInteraction, gl]);
+  }, [gl]);
 
-  const prevColor = useRef([...waveColor]);
-  useFrame(({ clock }) => {
-    const u = waveUniformsRef.current;
+  // Component-owned render loop. Immune to R3F's internal loop lifecycle, so a
+  // StrictMode double-mount or a Fast Refresh re-mount cannot freeze the canvas.
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const prevColor = [...waveColor];
 
-    if (!disableAnimation) {
-      u.time.value = clock.getElapsedTime();
-    }
+    const tick = () => {
+      const u = uniformsRef.current;
+      const p = propsRef.current;
 
-    if (u.waveSpeed.value !== waveSpeed) u.waveSpeed.value = waveSpeed;
-    if (u.waveFrequency.value !== waveFrequency) u.waveFrequency.value = waveFrequency;
-    if (u.waveAmplitude.value !== waveAmplitude) u.waveAmplitude.value = waveAmplitude;
+      if (!p.disableAnimation) {
+        u.time.value = (performance.now() - start) / 1000;
+      }
+      u.waveSpeed.value = p.waveSpeed;
+      u.waveFrequency.value = p.waveFrequency;
+      u.waveAmplitude.value = p.waveAmplitude;
+      u.colorNum.value = p.colorNum;
+      u.pixelSize.value = p.pixelSize;
+      u.mouseRadius.value = p.mouseRadius;
+      u.enableMouseInteraction.value = p.enableMouseInteraction ? 1 : 0;
 
-    if (!prevColor.current.every((v, i) => v === waveColor[i])) {
-      u.waveColor.value.set(...waveColor);
-      prevColor.current = [...waveColor];
-    }
+      if (!prevColor.every((v, i) => v === p.waveColor[i])) {
+        u.waveColor.value.set(...p.waveColor);
+        prevColor[0] = p.waveColor[0];
+        prevColor[1] = p.waveColor[1];
+        prevColor[2] = p.waveColor[2];
+      }
 
-    u.enableMouseInteraction.value = enableMouseInteraction ? 1 : 0;
-    u.mouseRadius.value = mouseRadius;
+      if (p.enableMouseInteraction) {
+        u.mousePos.value.copy(mouseRef.current);
+      }
 
-    if (enableMouseInteraction) {
-      u.mousePos.value.copy(mouseRef.current);
-    }
-  });
+      gl.render(scene, camera);
+      raf = requestAnimationFrame(tick);
+    };
 
-  const handlePointerMove = e => {
-    if (!enableMouseInteraction) return;
-    const rect = gl.domElement.getBoundingClientRect();
-    const dpr = gl.getPixelRatio();
-    mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
-  };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gl, scene, camera]);
 
   return (
-    <>
-      <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <shaderMaterial
-          vertexShader={waveVertexShader}
-          fragmentShader={waveFragmentShader}
-          uniforms={waveUniformsRef.current}
-        />
-      </mesh>
-
-      <EffectComposer>
-        <RetroEffect colorNum={colorNum} pixelSize={pixelSize} />
-      </EffectComposer>
-
-      <mesh
-        onPointerMove={handlePointerMove}
-        position={[0, 0, 0.01]}
-        scale={[viewport.width, viewport.height, 1]}
-        visible={false}
-      >
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial transparent opacity={0} />
-      </mesh>
-    </>
+    <mesh ref={meshRef} scale={[viewport.width, viewport.height, 1]}>
+      <planeGeometry args={[1, 1]} />
+      <shaderMaterial
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniformsRef.current}
+        glslVersion={THREE.GLSL3}
+      />
+    </mesh>
   );
 }
 
@@ -285,12 +266,12 @@ export default function Dither({
   pixelSize = 2,
   disableAnimation = false,
   enableMouseInteraction = true,
-  mouseRadius = 1
+  mouseRadius = 1,
 }) {
   return (
     <Canvas
       className="dither-container"
-      frameloop="always"
+      frameloop="never"
       camera={{ position: [0, 0, 6] }}
       dpr={1}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
