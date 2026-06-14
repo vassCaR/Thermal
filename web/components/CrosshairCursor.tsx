@@ -83,17 +83,17 @@ export function CrosshairCursor() {
     <div
       ref={wrapRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[9999] opacity-0 transition-opacity duration-200 mix-blend-difference"
+      className="pointer-events-none fixed inset-0 z-[9999] opacity-0 transition-opacity duration-200"
     >
       <div
         ref={vRef}
-        className="absolute left-0 top-0 h-screen w-px -translate-x-1/2 bg-white/70"
-        style={{ willChange: "transform" }}
+        className="absolute left-0 top-0 h-screen w-px -translate-x-1/2 bg-[#ffd9a8]/70"
+        style={{ willChange: "transform", boxShadow: "0 0 6px rgba(255,110,0,0.55)" }}
       />
       <div
         ref={hRef}
-        className="absolute left-0 top-0 h-px w-screen -translate-y-1/2 bg-white/70"
-        style={{ willChange: "transform" }}
+        className="absolute left-0 top-0 h-px w-screen -translate-y-1/2 bg-[#ffd9a8]/70"
+        style={{ willChange: "transform", boxShadow: "0 0 6px rgba(255,110,0,0.55)" }}
       />
     </div>
   );

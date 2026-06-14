@@ -106,6 +106,20 @@ vec3 dither(vec2 fragCoord, vec3 color) {
   return floor(color * (colorNum - 1.0) + 0.5) / (colorNum - 1.0);
 }
 
+// Thermal / infrared ramp (iron palette): cold -> dark red -> orange -> hot.
+vec3 thermal(float t) {
+  t = clamp(t, 0.0, 1.0);
+  vec3 c0 = vec3(0.0, 0.0, 0.0);          // cold / black
+  vec3 c1 = vec3(0.227, 0.039, 0.0);      // dark red  #3a0a00
+  vec3 c2 = vec3(1.0, 0.353, 0.0);        // orange    #ff5a00
+  vec3 c3 = vec3(1.0, 0.816, 0.439);      // hot       #ffd070
+  vec3 c4 = vec3(1.0, 1.0, 1.0);          // peak white
+  if (t < 0.25) return mix(c0, c1, t / 0.25);
+  if (t < 0.55) return mix(c1, c2, (t - 0.25) / 0.30);
+  if (t < 0.80) return mix(c2, c3, (t - 0.55) / 0.25);
+  return mix(c3, c4, (t - 0.80) / 0.20);
+}
+
 void main() {
   vec2 fragCoord = gl_FragCoord.xy;
   vec2 pixelCoord = (floor(fragCoord / pixelSize) + 0.5) * pixelSize;
@@ -123,7 +137,8 @@ void main() {
     f -= 0.5 * effect;
   }
 
-  vec3 col = mix(vec3(0.0), waveColor, f);
+  // Map the wave field through the thermal ramp = moving heat zones.
+  vec3 col = thermal(f);
   col = dither(fragCoord, col);
   fragColor = vec4(col, 1.0);
 }

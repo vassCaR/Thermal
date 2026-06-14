@@ -37,11 +37,11 @@ export function DitherBackground() {
   return (
     <div ref={wrapRef} className="absolute inset-0 z-0 h-full w-full" aria-hidden>
       <Dither
-        waveColor={[0.37, 0.83, 0.9]}
+        waveColor={[1.0, 0.353, 0.0]}
         disableAnimation={reduced}
         enableMouseInteraction={false}
         mouseRadius={0.3}
-        colorNum={3}
+        colorNum={5}
         pixelSize={4}
         waveAmplitude={0.3}
         waveFrequency={3}

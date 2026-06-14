@@ -6,12 +6,18 @@
   color-scheme: dark;
 
   /* ---- Design tokens (single source of truth) ---- */
-  --bg: #07090c;
-  --panel: #0e1116;
-  --accent: #5fd3e6; /* ghost / cyber — cold cyan accent */
-  --fg: #f3f6f8;
-  --muted: #7f8a93;
-  --border: #1d242b;
+  /* Thermal / infrared palette (iron): cold -> hot */
+  --thermal-cold: #000000;
+  --thermal-mid: #3a0a00;
+  --thermal-hot: #ff5a00;
+  --thermal-peak: #ffd070;
+
+  --bg: #0a0402; /* warm near-black */
+  --panel: #160a04;
+  --accent: #ff5a00; /* thermal hot orange */
+  --fg: #fff3e8; /* warm white */
+  --muted: #b08a72; /* warm muted */
+  --border: #3a1c0e;
 
   /* Display = Rigid Square (local OTF). Regular (400) for body/subtitles,
      ExtraBold (800) for the GHOST TIPS wordmark and headings. */
