@@ -38,12 +38,15 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="relative flex min-h-screen flex-1 flex-col overflow-hidden border-l border-border">
-              <DitherBackground />
-              {/* legibility veil over the shader */}
-              <div className="pointer-events-none absolute inset-0 z-[1] bg-black/30" />
-              <TopMarquee />
-              <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-16">
+            <main className="relative min-h-screen flex-1 border-l border-border">
+              {/* Fixed-in-view animated background: sticky full-screen layer, with the
+                  scrolling content pulled up over it via -mt-[100vh]. */}
+              <div className="pointer-events-none sticky top-0 z-0 h-screen w-full overflow-hidden">
+                <DitherBackground />
+                <div className="absolute inset-0 bg-black/35" />
+              </div>
+              <div className="relative z-10 -mt-[100vh]">
+                <TopMarquee />
                 {children}
               </div>
             </main>

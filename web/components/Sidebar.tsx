@@ -66,8 +66,8 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop: dense fixed column */}
-      <aside className="hidden w-[280px] shrink-0 md:block">
+      {/* Desktop: dense column, pinned while the main content scrolls */}
+      <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 self-start overflow-y-auto bg-bg md:block">
         <SidebarContent />
       </aside>
 

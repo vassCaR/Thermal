@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useWalletAddress } from "@/lib/wallet";
 import { api } from "@/lib/client";
-import { fadeUp, spring } from "@/lib/motion";
+import { spring } from "@/lib/motion";
 
 // useSearchParams => dynamic route (avoids the static prerender error)
 export const dynamic = "force-dynamic";
@@ -41,49 +41,50 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
-      <motion.header variants={fadeUp} initial="hidden" animate="show">
-        <h1 className="text-2xl font-bold text-white">Dashboard — {creatorId}</h1>
-        <p className="subtitle">support received, fully anonymous.</p>
-      </motion.header>
+    <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-24">
+      <header>
+        <p className="gt-eyebrow mb-1">Creator dashboard</p>
+        <h1 className="font-display text-3xl font-black uppercase text-fg">
+          {creatorId}
+        </h1>
+        <p className="mt-1 font-mono text-xs uppercase tracking-wide text-muted">
+          support received, fully anonymous
+        </p>
+      </header>
 
-      <motion.section
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="gt-panel text-center"
-      >
-        <p className="subtitle text-sm">total received</p>
+      <section className="gt-card text-center">
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+          total received
+        </p>
         <motion.p
           key={total}
-          initial={{ scale: 1.15 }}
+          initial={{ scale: 1.12 }}
           animate={{ scale: 1 }}
           transition={spring}
           data-testid="creator-total"
-          className="my-4 font-mono text-5xl text-green-400"
+          className="my-4 font-mono text-5xl text-accent"
         >
           {total}
         </motion.p>
-        <p className="text-xs text-ghost-muted">
+        <p className="font-mono text-[11px] leading-relaxed text-muted">
           No fan identity is stored. It is impossible to know who supported you.
         </p>
-      </motion.section>
+      </section>
 
-      <motion.section
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="gt-panel space-y-3"
-      >
-        <button data-testid="withdraw" className="gt-btn" onClick={withdraw}>
+      <section className="gt-card space-y-4">
+        <button
+          data-testid="withdraw"
+          className="gt-brutal-btn w-full"
+          onClick={withdraw}
+        >
           Withdraw to my wallet
         </button>
         {lastTx && (
-          <p className="text-sm text-ghost-muted">
-            Arc settlement: <code>{lastTx}</code>
+          <p className="font-mono text-xs text-muted">
+            Arc settlement: <code className="text-accent">{lastTx}</code>
           </p>
         )}
-      </motion.section>
-    </main>
+      </section>
+    </div>
   );
 }

@@ -58,6 +58,22 @@ body {
     @apply font-mono text-xs leading-relaxed text-muted;
   }
 
+  /* Brutalist content card for the scrollable sections */
+  .gt-card {
+    @apply border border-border bg-black/55 p-7 backdrop-blur transition-colors duration-200 hover:border-accent;
+    border-radius: 0;
+  }
+
+  /* Section eyebrow ("01 / HOW IT WORKS") */
+  .gt-eyebrow {
+    @apply mb-4 inline-flex items-center gap-3 font-mono text-[13px] uppercase tracking-[0.2em] text-accent;
+  }
+
+  /* Big section heading */
+  .gt-section-title {
+    @apply font-display text-4xl font-black uppercase leading-[0.95] text-fg sm:text-6xl;
+  }
+
   /* Back-compat for the creator/dashboard pages, brutalist-aligned (square corners) */
   .gt-panel {
     @apply border border-border bg-black/60 p-6 backdrop-blur;

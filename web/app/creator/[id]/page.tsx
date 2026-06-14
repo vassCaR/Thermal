@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { api } from "@/lib/client";
 import { signTip } from "@/lib/tip";
-import { fadeUp, spring } from "@/lib/motion";
+import { spring } from "@/lib/motion";
 
 const TICK_AMOUNT = "0.002000"; // USDC per second
 
@@ -64,72 +64,69 @@ export default function CreatorPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="flex items-center gap-4"
-      >
-        <div className="h-16 w-16 rounded-full bg-gradient-to-br from-ghost-accent to-ghost-accent2" />
+    <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-24">
+      <header className="flex items-center gap-4">
+        <div className="h-16 w-16 border border-border bg-accent/20" />
         <div>
-          <h1 className="text-2xl font-bold text-white">{creatorId}</h1>
-          <p className="subtitle">support them secretly, by the second.</p>
+          <p className="gt-eyebrow mb-1">Creator</p>
+          <h1 className="font-display text-3xl font-black uppercase text-fg">
+            {creatorId}
+          </h1>
         </div>
-      </motion.div>
+      </header>
 
       {!fanAccountId && (
-        <div className="gt-panel text-amber-400">
+        <div className="gt-card text-accent">
           You don&apos;t have a private account yet.{" "}
           <a className="underline" href="/">
             Go back to the home page
           </a>{" "}
-          to create one.
+          to create one by holding the support button once.
         </div>
       )}
 
-      <motion.section
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        className="gt-panel flex flex-col items-center gap-6 py-12"
-      >
+      <section className="gt-card flex flex-col items-center gap-7 py-12">
         <motion.button
           data-testid="hold-support"
-          className="gt-btn select-none px-10 py-6 text-lg"
+          className="gt-brutal-btn select-none px-12 py-7 text-lg"
           onPointerDown={start}
           onPointerUp={stop}
           onPointerLeave={stop}
           disabled={!fanAccountId}
-          whileTap={{ scale: 0.96 }}
-          animate={supporting ? { scale: [1, 1.035, 1] } : { scale: 1 }}
+          whileTap={{ scale: 0.97 }}
+          animate={supporting ? { scale: [1, 1.03, 1] } : { scale: 1 }}
           transition={
             supporting ? { duration: 1, repeat: Infinity, ease: "easeInOut" } : spring
           }
         >
-          {supporting ? "Supporting… (release to stop)" : "Hold to support"}
+          {supporting ? "Supporting… (release)" : "Hold to support"}
         </motion.button>
-        <p className="text-sm text-ghost-muted">
-          You&apos;ve quietly given{" "}
+        <p className="font-mono text-sm uppercase tracking-wide text-muted">
+          you&apos;ve quietly given{" "}
           <motion.span
             key={spent}
-            initial={{ scale: 1.3 }}
+            initial={{ scale: 1.25 }}
             animate={{ scale: 1 }}
             transition={spring}
             data-testid="spent"
-            className="inline-block font-mono text-green-400"
+            className="inline-block text-accent"
           >
             {spent} USDC
           </motion.span>
         </p>
-        <button className="gt-btn-ghost text-sm" onClick={deposit} disabled={!fanAccountId}>
+        <button
+          className="gt-frame-link min-w-[180px] justify-center"
+          onClick={deposit}
+          disabled={!fanAccountId}
+        >
           + Add 5 USDC
         </button>
-      </motion.section>
+      </section>
 
-      <p className="text-center text-xs text-ghost-muted">
-        Nobody will know it&apos;s you. The fan&rarr;creator link and the amounts stay private.
+      <p className="text-center font-mono text-xs leading-relaxed text-muted">
+        Nobody will know it&apos;s you. The fan&rarr;creator link and the amounts
+        stay private.
       </p>
-    </main>
+    </div>
   );
 }
