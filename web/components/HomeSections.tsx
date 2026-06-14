@@ -90,7 +90,7 @@ function WhoWeAre() {
       <div className="mt-12 grid gap-4 sm:grid-cols-3">
         {[
           ["Anonymous by default", "The fan→creator link never touches a public ledger."],
-          ["Per-second", "Hold a button; you give a tiny amount of USDC every second."],
+          ["Any amount", "Pick a preset or a custom amount and support a creator in one tap."],
           ["Settled on Arc", "Real value moves and settles on Circle's Arc network."],
         ].map(([title, body], i) => (
           <Reveal key={title} delay={0.1 * i} className="h-full">
@@ -112,8 +112,8 @@ function WhoWeAre() {
 function HowItWorks() {
   const steps = [
     ["01", "Connect a wallet", "Bring MetaMask, Brave, Rabby, Coinbase or WalletConnect. A private account is created for you on first support."],
-    ["02", "Hold to support", "Press and hold. Every second, a micro-amount of USDC is routed privately to the creator you chose."],
-    ["03", "Stay invisible", "The creator sees an anonymous running total. Release to stop. Your identity never leaves your device."],
+    ["02", "Choose your amount", "Pick a preset or type any amount, choose the creator, and tap Support. Your USDC is routed privately to them."],
+    ["03", "Stay invisible", "The creator sees only an anonymous running total. Your identity never leaves your device."],
   ];
   return (
     <Section id="how">

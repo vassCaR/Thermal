@@ -5,7 +5,8 @@ import { useWalletAddress, useTipSigner } from "@/lib/wallet";
 import { api, ApiError } from "@/lib/client";
 import { signTipMock, type TipSignFn } from "@/lib/tip";
 
-const FEATURED_CREATOR = "ghost:alice";
+const DEFAULT_CREATOR = "ghost:alice";
+const FEATURED_CREATORS = ["ghost:alice", "ghost:bob", "ghost:carol"] as const;
 const DEMO_FUNDING = "100.000000"; // auto-funded so the demo never hits "insufficient funds"
 const PRESETS = ["0.10", "0.50", "1.00", "5.00"] as const;
 
@@ -18,12 +19,15 @@ function toUsdc(input: string): string | null {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** SUPPORT CREATORS: pick an amount (preset or custom) and send it in one tap,
- *  OR run the scripted DEMO that replays the whole MOCK path end-to-end.
- *  Account + funding live in refs (in-memory, no localStorage). */
-export function CtaButtons() {
+/** SUPPORT CREATORS: choose a creator, pick an amount (preset or custom) and
+ *  send it in one tap, OR run the scripted DEMO that replays the whole MOCK path
+ *  end-to-end. Account + funding live in refs (in-memory, no localStorage).
+ *  When `creatorId` is provided (e.g. the per-creator page), the creator is
+ *  fixed and the picker is hidden. */
+export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
   const address = useWalletAddress();
   const signer = useTipSigner();
+  const [creator, setCreator] = useState<string>(creatorId ?? DEFAULT_CREATOR);
   const [amount, setAmount] = useState<string>("1.00");
   const [custom, setCustom] = useState("");
   const [busy, setBusy] = useState(false);
@@ -76,7 +80,7 @@ export function CtaButtons() {
         nonceRef.current += 1;
         const auth = await sign({
           fanAccountId: f,
-          creatorId: FEATURED_CREATOR,
+          creatorId: creator,
           amount: value,
           nonce: nonceRef.current,
           ts: Date.now(),
@@ -98,7 +102,7 @@ export function CtaButtons() {
       const r = await api.meSpent(fan);
       setSpent(r.total);
     },
-    [ensureFunded, onboardFresh],
+    [ensureFunded, onboardFresh, creator],
   );
 
   const value = toUsdc(custom !== "" ? custom : amount);
@@ -167,6 +171,47 @@ export function CtaButtons() {
         <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
         {signer.real ? "Live wallet · settlement simulated" : "Demo mode — simulated"}
       </span>
+
+      {/* Creator selector — choose who to support (hidden when fixed by a page) */}
+      {!creatorId && (
+        <div className="flex flex-col items-center gap-2">
+          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+            supporting
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {FEATURED_CREATORS.map((c) => {
+              const active = creator === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  data-testid={`creator-${c}`}
+                  aria-pressed={active}
+                  disabled={busy}
+                  onClick={() => setCreator(c)}
+                  className={`border px-3 py-1.5 font-mono text-[13px] lowercase tracking-wide outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 ${
+                    active
+                      ? "border-accent text-accent"
+                      : "border-border text-muted hover:border-accent hover:text-fg"
+                  }`}
+                >
+                  {c}
+                </button>
+              );
+            })}
+            <input
+              type="text"
+              value={creator}
+              disabled={busy}
+              data-testid="creator-custom"
+              aria-label="Creator handle to support"
+              onChange={(e) => setCreator(e.target.value)}
+              placeholder="ghost:handle"
+              className="w-36 border border-border bg-transparent px-3 py-1.5 text-center font-mono text-[13px] lowercase text-fg outline-none transition-colors focus:border-accent placeholder:text-muted/70 disabled:opacity-50"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Amount selector: presets + custom field */}
       <div className="flex flex-wrap items-center justify-center gap-2">

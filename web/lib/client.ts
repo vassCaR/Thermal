@@ -11,6 +11,8 @@ import {
   type FanAccountId,
   type OnboardReq,
   type OnboardRes,
+  type PayoutAddressReq,
+  type PayoutAddressRes,
   type SpentRes,
   type TipAuthorization,
   type TipRes,
@@ -55,5 +57,9 @@ export const api = {
     get<SpentRes>(`${ENDPOINTS.meSpent}?fanAccountId=${encodeURIComponent(fanAccountId)}`),
   creatorBalance: (id: CreatorId) =>
     get<CreatorBalanceRes>(ENDPOINTS.creatorBalance(id)),
+  setPayoutAddress: (id: CreatorId, payoutAddress: string) =>
+    post<PayoutAddressReq, PayoutAddressRes>(ENDPOINTS.creatorPayout(id), {
+      payoutAddress,
+    }),
   withdraw: (b: WithdrawReq) => post<WithdrawReq, WithdrawRes>(ENDPOINTS.withdraw, b),
 };

@@ -9,6 +9,7 @@ const REPO_URL = "https://github.com/vassCaR/ghost-tips";
 const LINKS = [
   { label: "About us", href: "#about", external: false },
   { label: "How it works", href: "#how", external: false },
+  { label: "Dashboard", href: "/dashboard", external: false },
   { label: "Docs", href: REPO_URL, external: true },
 ];
 

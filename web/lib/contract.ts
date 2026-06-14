@@ -94,5 +94,15 @@ export const ENDPOINTS = {
   tip: "/api/tip",
   meSpent: "/api/me/spent",
   creatorBalance: (id: CreatorId) => `/api/creator/${id}/balance`,
+  creatorPayout: (id: CreatorId) => `/api/creator/${id}/payout-address`,
   withdraw: "/api/withdraw",
 } as const;
+
+// Creator-side admin route (not in the frozen fan-facing contract).
+export interface PayoutAddressReq {
+  payoutAddress: string;
+}
+export interface PayoutAddressRes {
+  ok: boolean;
+  payoutAddress: string;
+}
