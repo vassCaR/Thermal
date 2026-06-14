@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWalletAddress } from "@/lib/wallet";
-import { api } from "@/lib/client";
+import { api, ApiError } from "@/lib/client";
 import { signTip } from "@/lib/tip";
 import { ConnectButton } from "@/components/ConnectButton";
 
@@ -26,20 +26,38 @@ export function CtaButtons() {
     fanRef.current = localStorage.getItem("gt_fanAccountId");
   }, []);
 
+  // Create a fresh private account and remember it. Resets the funded flag so the
+  // next ensureReady() re-funds it.
+  const onboardFresh = useCallback(async () => {
+    const { fanAccountId } = await api.onboard({ dynamicAddress: address });
+    fanRef.current = fanAccountId;
+    nonceRef.current = 0;
+    fundedRef.current = false;
+    localStorage.setItem("gt_fanAccountId", fanAccountId);
+    return fanAccountId;
+  }, [address]);
+
   const ensureReady = useCallback(async () => {
-    let fan = fanRef.current;
-    if (!fan) {
-      const { fanAccountId } = await api.onboard({ dynamicAddress: address });
-      fan = fanAccountId;
-      fanRef.current = fanAccountId;
-      localStorage.setItem("gt_fanAccountId", fanAccountId);
-    }
+    let fan = fanRef.current ?? localStorage.getItem("gt_fanAccountId");
+    if (!fan) fan = await onboardFresh();
+    fanRef.current = fan;
     if (!fundedRef.current) {
-      await api.deposit({ fanAccountId: fan, amount: DEMO_FUNDING });
+      try {
+        await api.deposit({ fanAccountId: fan, amount: DEMO_FUNDING });
+      } catch (e) {
+        // Stored account is unknown to the server (e.g. the server restarted and
+        // wiped its in-memory state) -> transparently re-onboard and re-fund.
+        if (e instanceof ApiError && e.status === 404) {
+          fan = await onboardFresh();
+          await api.deposit({ fanAccountId: fan, amount: DEMO_FUNDING });
+        } else {
+          throw e;
+        }
+      }
       fundedRef.current = true;
     }
     return fan;
-  }, [address]);
+  }, [onboardFresh]);
 
   const tick = useCallback(async () => {
     const fan = fanRef.current;
@@ -57,9 +75,20 @@ export function CtaButtons() {
       const r = await api.meSpent(fan);
       setSpent(r.total);
     } catch (e) {
-      console.error(e);
+      // Server restarted mid-hold -> recover a fresh funded account; the next
+      // tick (1s later) resumes cleanly.
+      if (e instanceof ApiError && e.status === 404) {
+        try {
+          await onboardFresh();
+          await ensureReady();
+        } catch (re) {
+          console.error(re);
+        }
+      } else {
+        console.error(e);
+      }
     }
-  }, []);
+  }, [ensureReady, onboardFresh]);
 
   async function start() {
     if (holdingRef.current) return;

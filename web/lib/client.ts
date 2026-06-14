@@ -20,19 +20,30 @@ import {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787";
 
+/** Error carrying the HTTP status so callers can recover (e.g. 404 unknown fan). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  if (!res.ok) throw new ApiError(`${path} -> ${res.status}`, res.status);
   return res.json() as Promise<TRes>;
 }
 
 async function get<TRes>(path: string): Promise<TRes> {
   const res = await fetch(`${BASE}${path}`);
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  if (!res.ok) throw new ApiError(`${path} -> ${res.status}`, res.status);
   return res.json() as Promise<TRes>;
 }
 
