@@ -8,6 +8,7 @@ export function HomeSections() {
     <div className="relative">
       <WhoWeAre />
       <HowItWorks />
+      <HelmetSplit />
       <WhyPrivacy />
       <TheProblem />
       <FinalCta />
@@ -25,9 +26,50 @@ function Section({
   return (
     <section
       id={id}
-      className="border-t border-border bg-black/30 px-6 py-24 backdrop-blur-sm sm:py-32"
+      className="border-t border-border/50 bg-white/[0.025] px-6 py-24 backdrop-blur-md sm:py-32"
     >
       <div className="mx-auto w-full max-w-5xl">{children}</div>
+    </section>
+  );
+}
+
+const SKETCHFAB_MODEL = "932a96f443cc4c5aa7cb795afdb75f17";
+
+/** Split layout: copy on one side, the Ghost helmet (Sketchfab embed) on the
+ *  other. Real-time R3F does not present on this machine's GPU, so we use the
+ *  official Sketchfab viewer (license-compliant, its own WebGL pipeline). */
+function HelmetSplit() {
+  return (
+    <section
+      id="helmet"
+      className="border-t border-border/50 bg-white/[0.025] px-6 py-24 backdrop-blur-md sm:py-32"
+    >
+      <div className="mx-auto grid w-full max-w-5xl items-center gap-12 lg:grid-cols-2">
+        <Reveal>
+          <div>
+            <p className="gt-eyebrow">UNIT / GHOST</p>
+            <h2 className="gt-section-title">Built for the unseen</h2>
+            <p className="mt-6 max-w-md font-display text-[15px] leading-relaxed text-fg/75">
+              Privacy is a posture, not an afterthought. Inspect the Ghost unit
+              from every angle — drag to orbit. Support stays just as invisible as
+              the face behind the visor.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div className="relative aspect-[4/3] w-full overflow-hidden border border-border/60 bg-black/40">
+            <iframe
+              title="Ghost helmet — 3D"
+              src={`https://sketchfab.com/models/${SKETCHFAB_MODEL}/embed?autospin=0.4&autostart=1&preload=0&ui_theme=dark&ui_infos=0&ui_controls=1&ui_watermark=0&dnt=1`}
+              loading="lazy"
+              allow="autoplay; fullscreen; xr-spatial-tracking"
+              allowFullScreen
+              className="absolute inset-0 h-full w-full"
+              style={{ border: 0 }}
+            />
+          </div>
+        </Reveal>
+      </div>
     </section>
   );
 }

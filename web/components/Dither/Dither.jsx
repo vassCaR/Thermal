@@ -149,6 +149,7 @@ export default function Dither({
   disableAnimation = false,
   enableMouseInteraction = true,
   mouseRadius = 1,
+  paused = false,
 }) {
   const canvasRef = useRef(null);
   const propsRef = useRef({});
@@ -162,6 +163,7 @@ export default function Dither({
     disableAnimation,
     enableMouseInteraction,
     mouseRadius,
+    paused,
   };
 
   useEffect(() => {
@@ -234,12 +236,12 @@ export default function Dither({
     let raf = 0;
     const start = performance.now();
     const render = () => {
-      // Pause work while the tab is hidden (perf / battery).
-      if (typeof document !== "undefined" && document.hidden) {
+      const p = propsRef.current;
+      // Pause GPU work while the tab is hidden or the hero is off-viewport.
+      if ((typeof document !== "undefined" && document.hidden) || p.paused) {
         raf = requestAnimationFrame(render);
         return;
       }
-      const p = propsRef.current;
       const t = p.disableAnimation ? 0 : (performance.now() - start) / 1000;
       gl.uniform2f(U.resolution, w, h);
       gl.uniform1f(U.time, t);

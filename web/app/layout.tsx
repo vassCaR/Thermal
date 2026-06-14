@@ -5,6 +5,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { DitherBackground } from "@/components/DitherBackground";
 import { TopBar } from "@/components/TopBar";
+import { CrosshairCursor } from "@/components/CrosshairCursor";
 
 // Rigid Square (local OTF) — display + secondary text per the Ghost brand.
 const rigid = localFont({
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en" className={`${rigid.variable} ${jetbrains.variable} scroll-smooth`}>
       <body className="overflow-x-hidden">
         <Providers>
+          <CrosshairCursor />
           <main className="relative min-h-screen w-full overflow-x-hidden">
             {/* Fixed-in-view animated dither background (sticky full-screen layer);
                 content scrolls over it via -mt-[100vh]. */}

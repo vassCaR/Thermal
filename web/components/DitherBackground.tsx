@@ -1,15 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // WebGL component → client-only, never SSR'd. Fills its (relative) parent.
 const Dither = dynamic(() => import("./Dither/Dither"), { ssr: false });
 
-/** Ghost/cyber dithered waves (cold cyan), filling the hero behind the content.
- *  Animation is paused when the user prefers reduced motion. */
+/** Ghost/cyber dithered waves (cold cyan) behind the content. Slow + heavily
+ *  pixelated; paused when off-viewport (IntersectionObserver), when the tab is
+ *  hidden, or when the user prefers reduced motion. Mouse interaction is off —
+ *  the CrosshairCursor overlay replaces the old pointer halo. */
 export function DitherBackground() {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [reduced, setReduced] = useState(false);
+  const [offscreen, setOffscreen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -19,18 +23,30 @@ export function DitherBackground() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setOffscreen(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div className="absolute inset-0 z-0 h-full w-full" aria-hidden>
+    <div ref={wrapRef} className="absolute inset-0 z-0 h-full w-full" aria-hidden>
       <Dither
         waveColor={[0.37, 0.83, 0.9]}
         disableAnimation={reduced}
-        enableMouseInteraction={!reduced}
+        enableMouseInteraction={false}
         mouseRadius={0.3}
-        colorNum={4}
-        pixelSize={2}
+        colorNum={3}
+        pixelSize={4}
         waveAmplitude={0.3}
         waveFrequency={3}
-        waveSpeed={0.05}
+        waveSpeed={0.025}
+        paused={offscreen}
       />
     </div>
   );
