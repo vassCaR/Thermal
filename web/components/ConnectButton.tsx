@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { DYNAMIC_ENABLED } from "@/lib/wallet";
 import { WalletModal, type WalletOption } from "@/components/WalletModal";
@@ -11,8 +11,6 @@ interface ConnectedWallet {
   logo: string;
   address: string;
 }
-
-const STORAGE_KEY = "gt_wallet";
 
 function randomAddress(): string {
   const hex = "0123456789abcdef";
@@ -33,41 +31,26 @@ const NAV_BTN =
 /** "CONNECT WALLET" CTA.
  *  - Real Dynamic widget when NEXT_PUBLIC_DYNAMIC_ENV_ID is configured.
  *  - Otherwise a demo multi-wallet picker (MetaMask / Brave / Rabby / Coinbase /
- *    WalletConnect) that simulates a connection.
+ *    WalletConnect) that simulates a connection. State is in-memory (no
+ *    localStorage), so a reload starts from a clean demo state.
  *  - `compact` renders the smaller navbar variant (used in the top bar). */
 export function ConnectButton({ compact = false }: { compact?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [connected, setConnected] = useState<ConnectedWallet | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const btnClass = compact ? NAV_BTN : "gt-brutal-btn";
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setConnected(JSON.parse(raw) as ConnectedWallet);
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   if (DYNAMIC_ENABLED) {
     return <DynamicWidget />;
   }
 
   function select(w: WalletOption) {
-    const wallet: ConnectedWallet = {
-      id: w.id,
-      name: w.name,
-      logo: w.logo,
-      address: randomAddress(),
-    };
-    setConnected(wallet);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
+    setConnected({ id: w.id, name: w.name, logo: w.logo, address: randomAddress() });
     setOpen(false);
   }
 
   function disconnect() {
     setConnected(null);
-    localStorage.removeItem(STORAGE_KEY);
   }
 
   if (connected) {
@@ -92,15 +75,23 @@ export function ConnectButton({ compact = false }: { compact?: boolean } = {}) {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         data-testid="connect-wallet"
-        onClick={() => setOpen(true)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
         className={btnClass}
       >
         Connect Wallet
         <span className="text-[10px] text-accent">[demo]</span>
       </button>
-      <WalletModal open={open} onClose={() => setOpen(false)} onSelect={select} />
+      <WalletModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onSelect={select}
+        anchorRef={triggerRef}
+      />
     </>
   );
 }

@@ -1,68 +1,113 @@
-// One-off e2e verification of the live Thermal demo on :3001.
-// Drives a real headless browser: navbar, branding, amount selector + Support.
+// One-off e2e verification of the live Thermal demo on :3001 (V2).
+// Covers: top bar (links/badge), wallet dropdown (downward + scrollable, short
+// viewport), Run Demo scripted flow, manual support regression, overflow/console.
 import { chromium } from "playwright";
 
 const BASE = process.env.WEB_URL ?? "http://localhost:3001";
+let failed = false;
 const fail = (m) => {
   console.error("FAIL:", m);
-  process.exitCode = 1;
+  failed = true;
 };
+const ok = (m) => console.log("ok:", m);
 
 const browser = await chromium.launch({
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--ignore-gpu-blocklist"],
 });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+const page = await ctx.newPage();
 const consoleErrors = [];
 page.on("pageerror", (e) => consoleErrors.push(String(e.message)));
 page.on("console", (m) => m.type() === "error" && consoleErrors.push(m.text()));
 
 await page.goto(BASE, { waitUntil: "networkidle" });
 
-// --- §1 navbar ---
-const wordmarks = await page.getByText("Thermal", { exact: true }).count();
-console.log("Thermal wordmarks on page:", wordmarks);
-if (!(await page.getByRole("button", { name: /connect wallet/i }).isVisible()))
-  fail("Connect Wallet not visible in top bar");
-if (!(await page.getByRole("link", { name: /about us/i }).first().isVisible()))
-  fail("About us link missing");
-if (!(await page.getByRole("link", { name: /how it works/i }).first().isVisible()))
-  fail("How it works link missing");
+// ---- §2 top bar ----
+for (const [name, sel] of [
+  ["About us link", page.getByRole("link", { name: /about us/i })],
+  ["How it works link", page.getByRole("link", { name: /how it works/i })],
+  ["Connect Wallet", page.getByRole("button", { name: /connect wallet/i })],
+]) {
+  (await sel.first().isVisible()) ? ok(name) : fail(`${name} missing`);
+}
+const docs = page.getByRole("link", { name: /^docs$/i });
+if (await docs.isVisible()) {
+  const href = await docs.getAttribute("href");
+  href && href.includes("github.com") ? ok(`Docs -> ${href}`) : fail(`Docs href not github: ${href}`);
+} else fail("Docs link missing");
+(await page.getByText(/arc testnet/i).first().isVisible())
+  ? ok("Arc Testnet badge")
+  : fail("Arc Testnet badge missing");
 
-// --- §2 branding: no Ghost logo placeholder ---
-const ghostImgs = await page.locator('img[alt="Ghost"]').count();
-console.log("Ghost logo placeholders:", ghostImgs);
-if (ghostImgs > 0) fail(`${ghostImgs} Ghost logo placeholder(s) still rendered`);
+// ---- §2 no horizontal overflow ----
+const overflow = await page.evaluate(
+  () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+);
+overflow <= 1 ? ok("no horizontal overflow") : fail(`horizontal overflow: ${overflow}px`);
 
-// --- hero ---
-if (!(await page.getByRole("heading", { name: "Thermal" }).isVisible()))
-  fail("Hero THERMAL heading missing");
+// ---- §3 demo badge ----
+(await page.getByTestId("demo-badge").isVisible())
+  ? ok("DEMO badge visible")
+  : fail("DEMO badge missing");
 
-// --- §4 amount selector + support ---
-const totalBefore = (await page.getByTestId("supported-total").textContent())?.trim();
-console.log("supported-total before:", totalBefore);
+// ---- §3 Run Demo scripted flow ----
+await page.getByTestId("run-demo").click();
+await page
+  .getByTestId("demo-step")
+  .filter({ hasText: /complete/i })
+  .waitFor({ timeout: 20000 })
+  .then(() => ok("Run Demo completed"))
+  .catch(() => fail("Run Demo did not complete"));
+const afterDemo = (await page.getByTestId("supported-total").textContent())?.trim();
+console.log("total after demo:", afterDemo);
+afterDemo && !afterDemo.startsWith("0.000000") ? ok("total updated by demo") : fail("demo total stuck at 0");
+
+// replay once
+await page.getByTestId("run-demo").click();
+await page.getByTestId("demo-step").filter({ hasText: /complete/i }).waitFor({ timeout: 20000 })
+  .then(() => ok("Run Demo replayable")).catch(() => fail("Run Demo not replayable"));
+const afterReplay = (await page.getByTestId("supported-total").textContent())?.trim();
+afterReplay !== afterDemo ? ok(`total climbed on replay (${afterReplay})`) : fail("total unchanged on replay");
+
+// ---- regression: manual amount -> support ----
+const before = (await page.getByTestId("supported-total").textContent())?.trim();
 await page.getByTestId("amount-5.00").click();
 await page.getByTestId("support-creators").click();
-await page
-  .getByTestId("supported-total")
-  .filter({ hasNotText: "0.000000" })
-  .waitFor({ timeout: 10000 })
-  .catch(() => fail("supported-total did not update after Support click"));
-const totalAfter = (await page.getByTestId("supported-total").textContent())?.trim();
-console.log("supported-total after:", totalAfter);
-if (totalAfter === totalBefore) fail("total unchanged after support");
-
-// custom amount
-await page.getByTestId("amount-custom").fill("2.50");
-await page.getByTestId("support-creators").click();
 await page.waitForTimeout(1500);
-const totalAfter2 = (await page.getByTestId("supported-total").textContent())?.trim();
-console.log("supported-total after custom 2.50:", totalAfter2);
-if (totalAfter2 === totalAfter) fail("total unchanged after custom support");
+const after = (await page.getByTestId("supported-total").textContent())?.trim();
+after !== before ? ok(`manual support works (${before} -> ${after})`) : fail("manual support regression");
 
-await page.screenshot({ path: "/tmp/thermal-demo.png", fullPage: false });
-console.log("screenshot -> /tmp/thermal-demo.png");
+// ---- §1 wallet dropdown on a SHORT viewport (the original bug condition) ----
+await page.setViewportSize({ width: 1280, height: 560 });
+const trigger = page.getByTestId("connect-wallet");
+await trigger.click();
+const menu = page.getByRole("menu", { name: /connect a wallet/i });
+await menu.waitFor({ timeout: 5000 }).catch(() => fail("wallet menu did not open"));
+const tBox = await trigger.boundingBox();
+const mBox = await menu.boundingBox();
+if (tBox && mBox) {
+  mBox.y >= tBox.y + tBox.height - 4 ? ok("menu opens downward (below trigger)") : fail(`menu opens upward: menu.y=${mBox.y} trigger.bottom=${tBox.y + tBox.height}`);
+  mBox.y >= 0 ? ok("menu top not clipped above viewport") : fail(`menu clipped at top: y=${mBox.y}`);
+  mBox.y + mBox.height <= 560 + 1 ? ok("menu fits within viewport height") : fail(`menu overflows bottom: ${mBox.y + mBox.height}`);
+}
+// all five wallets reachable (scroll the last into view, then click it)
+for (const id of ["metamask", "brave", "rabby", "coinbase", "walletconnect"]) {
+  const w = page.getByTestId(`wallet-${id}`);
+  (await w.count()) ? null : fail(`wallet ${id} not rendered`);
+}
+const last = page.getByTestId("wallet-walletconnect");
+await last.scrollIntoViewIfNeeded();
+await last.click();
+(await page.getByTestId("wallet-connected").isVisible())
+  ? ok("wallet selectable -> connected")
+  : fail("wallet selection did not connect");
+
+await page.setViewportSize({ width: 1280, height: 800 });
+await page.screenshot({ path: "/tmp/thermal-demo-v2.png", fullPage: false });
+
 console.log("console errors:", consoleErrors.length ? consoleErrors : "none");
 if (consoleErrors.length) fail("console errors present");
 
 await browser.close();
-console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: PASS");
+console.log(failed ? "RESULT: FAILED" : "RESULT: PASS");
+process.exit(failed ? 1 : 0);

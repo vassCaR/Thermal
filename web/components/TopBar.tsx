@@ -2,14 +2,36 @@
 
 import { ConnectButton } from "@/components/ConnectButton";
 
+const REPO_URL = "https://github.com/vassCaR/ghost-tips";
+
+// Left-nav links. Anchors point to existing on-page sections; Docs is the public
+// repo (a real destination — no dead pages / 404s).
 const LINKS = [
-  { label: "About us", href: "#about" },
-  { label: "How it works", href: "#how" },
+  { label: "About us", href: "#about", external: false },
+  { label: "How it works", href: "#how", external: false },
+  { label: "Docs", href: REPO_URL, external: true },
 ];
 
-/** Top navigation. Left: THERMAL wordmark + primary links. Right: Connect Wallet.
- *  Flex space-between, vertically centered, responsive (links collapse on small
- *  screens so the bar never overflows horizontally). */
+/** Discreet network-status badge. Honest signal that the privacy-payment flow
+ *  settles on Circle's Arc testnet (matches CHAIN_ENV=arc-testnet). */
+function NetworkBadge() {
+  return (
+    <span
+      title="Settlement network — Circle Arc (testnet)"
+      className="hidden items-center gap-2 border border-border/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-muted md:inline-flex"
+    >
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+      </span>
+      Arc Testnet
+    </span>
+  );
+}
+
+/** Top navigation. Left: THERMAL wordmark + primary links (incl. Docs). Right:
+ *  network badge + Connect Wallet. Flex space-between, vertically centered,
+ *  responsive (links/badge collapse progressively so the bar never overflows). */
 export function TopBar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-black/40 backdrop-blur-md">
@@ -27,18 +49,20 @@ export function TopBar() {
               <li key={l.href}>
                 <a
                   href={l.href}
-                  className="group relative inline-flex items-center px-1 py-2 font-mono text-[15px] uppercase tracking-[0.18em] text-muted transition-colors duration-200 hover:text-fg"
+                  {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
+                  className="group relative inline-flex items-center px-1 py-2 font-mono text-[15px] uppercase tracking-[0.18em] text-muted transition-colors duration-200 hover:text-fg focus-visible:text-fg focus-visible:outline-none"
                 >
                   {l.label}
-                  <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+                  <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full group-focus-visible:w-full" />
                 </a>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Right: wallet CTA (compact navbar variant) */}
-        <div className="flex shrink-0 items-center">
+        {/* Right cluster: network status + wallet CTA */}
+        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
+          <NetworkBadge />
           <ConnectButton compact />
         </div>
       </nav>
