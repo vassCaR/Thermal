@@ -272,7 +272,7 @@ export default function Dither({
       frameloop="always"
       camera={{ position: [0, 0, 6] }}
       dpr={1}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
+      gl={{ antialias: true, preserveDrawingBuffer: false }}
     >
       <DitheredWaves
         waveSpeed={waveSpeed}
