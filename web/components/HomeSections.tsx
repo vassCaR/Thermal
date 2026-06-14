@@ -1,6 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Reveal } from "@/components/Reveal";
+
+// Heavy WebGL canvas → lazy, client-only.
+const Privacy3D = dynamic(() => import("@/components/Privacy3D"), { ssr: false });
 
 /** Scrollable brutalist content below the hero (basement.studio-style scroll). */
 export function HomeSections() {
@@ -9,6 +13,7 @@ export function HomeSections() {
       <WhoWeAre />
       <HowItWorks />
       <HelmetSplit />
+      <PrivacyCanvas />
       <WhyPrivacy />
       <TheProblem />
       <FinalCta />
@@ -224,6 +229,35 @@ function TheProblem() {
         </Reveal>
       </div>
     </Section>
+  );
+}
+
+function PrivacyCanvas() {
+  return (
+    <section
+      id="privacy-3d"
+      className="border-t border-border/50 bg-white/[0.025] px-6 py-20 backdrop-blur-md sm:py-28"
+    >
+      <div className="mx-auto w-full max-w-6xl">
+        <Reveal>
+          <p className="gt-eyebrow text-center">THE PRINCIPLE</p>
+        </Reveal>
+        <Reveal delay={0.08}>
+          {/* Wide, short stage for the extruded wireframe word. */}
+          <div className="relative mx-auto h-[clamp(160px,28vw,360px)] w-full">
+            <Privacy3D />
+            {/* Accessible text — the visual is decorative wireframe geometry. */}
+            <span className="sr-only">PRIVACY</span>
+          </div>
+        </Reveal>
+        <Reveal delay={0.12}>
+          <p className="mx-auto mt-6 max-w-xl text-center font-display text-[15px] leading-relaxed text-fg/70">
+            Privacy isn&apos;t a feature bolted on top — it&apos;s the structure
+            everything else is built around.
+          </p>
+        </Reveal>
+      </div>
+    </section>
   );
 }
 

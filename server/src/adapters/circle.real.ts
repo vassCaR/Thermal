@@ -65,6 +65,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { arcTestnet } from "viem/chains";
 import type { Config } from "../config.js";
+import type { ResolveCreatorAddress } from "./index.js";
 import type {
   CircleSettlementPort,
   SettleBatchInput,
@@ -101,7 +102,20 @@ export class RealCircleSettlement implements CircleSettlementPort {
   private readonly usdc: `0x${string}`;
   private readonly gatewayBase: string;
 
-  constructor(private readonly cfg: Config) {
+  /**
+   * Creator-only lookup that maps a CreatorId to its on-chain payout address.
+   * Threaded in via buildAdapters (wired to Store.getCreatorPayoutAddress in
+   * app.ts). Optional so the adapter can be constructed without it, in which case
+   * resolveCreatorPayoutAddress falls back to the legacy "creatorId IS an address"
+   * behaviour. NO fan data is ever involved — this is a creator->address map.
+   */
+  private readonly resolveCreatorAddress?: ResolveCreatorAddress;
+
+  constructor(
+    private readonly cfg: Config,
+    resolveCreatorAddress?: ResolveCreatorAddress,
+  ) {
+    this.resolveCreatorAddress = resolveCreatorAddress;
     // NOTE: this constructor only runs when MOCK=false (see adapters/index.ts),
     // so there are no import-time side effects in MOCK mode.
     if (!cfg.settlerPrivateKey) {
@@ -254,24 +268,45 @@ export class RealCircleSettlement implements CircleSettlementPort {
   /**
    * Map a creatorId to the on-chain address that should receive settlement.
    *
-   * CONFIRMED-SHAPE / NOT-YET-WIRED: in the reference, the seller's payout
-   * address is a single env (SELLER_ADDRESS). Ghost Tips is multi-creator, so the
-   * creator->address mapping must come from the creator registry/store. That
-   * registry lives outside this adapter's allowed edit scope, so for now we accept
-   * a creatorId that already IS a 0x address (the common demo case) and otherwise
-   * throw a clear, actionable error.
+   * WIRED (TASK 1): the creator->address mapping now comes from the creator
+   * registry (Store.getCreatorPayoutAddress), injected as `resolveCreatorAddress`
+   * via the adapter factory (buildAdapters). Resolution order:
    *
-   * TODO(go-live): inject a `resolveCreatorAddress(creatorId): Address` lookup
-   * (from the store) via the adapter factory, OR have the batcher pass the
-   * creator's payout address inside SettleBatchInput. Either way, NO fan data is
-   * involved — this is a creator-only mapping.
+   *   1. If a payout address has been registered for this creatorId in the store,
+   *      use it. This is the normal multi-creator path: a creator's opaque handle
+   *      (e.g. "ghost:alice") maps to the 0x address they registered via
+   *      POST /api/creator/:id/payout-address.
+   *   2. Back-compat fallback: if NO registry is wired (resolver absent) OR no
+   *      address is registered, but the creatorId itself already IS a 0x address,
+   *      use it directly (the original demo behaviour).
+   *   3. Otherwise throw a clear, actionable error telling the operator to
+   *      register a payout address.
+   *
+   * PRIVACY: only creator-owned data is touched here — a CreatorId and the public
+   * address that creator chose to be paid at. No fan identity is read or derived.
    */
   private resolveCreatorPayoutAddress(creatorId: string): `0x${string}` {
+    const registered = this.resolveCreatorAddress?.(creatorId);
+    if (registered) {
+      // Defence in depth: the store should only ever hold validated addresses
+      // (the route validates before storing), but re-check at the network edge.
+      if (!isAddress(registered)) {
+        throw new Error(
+          `RealCircleSettlement.resolveCreatorPayoutAddress: registered payout ` +
+            `address for creator "${creatorId}" is not a valid 0x address: ` +
+            `"${registered}".`,
+        );
+      }
+      return registered;
+    }
+
+    // Fallback: creatorId itself is already an on-chain address (legacy demo).
     if (isAddress(creatorId)) return creatorId as `0x${string}`;
+
     throw new Error(
-      `RealCircleSettlement.resolveCreatorPayoutAddress: creatorId "${creatorId}" ` +
-        `is not an on-chain address and no creator->address registry is wired into ` +
-        `this adapter yet. See TODO(go-live) in circle.real.ts.`,
+      `RealCircleSettlement.resolveCreatorPayoutAddress: creator "${creatorId}" ` +
+        `has no registered payout address and is not itself a 0x address. ` +
+        `Register one via POST /api/creator/:creatorId/payout-address before settling.`,
     );
   }
 
@@ -403,8 +438,11 @@ export class RealCircleSettlement implements CircleSettlementPort {
  *      either add `@circle-fin/x402-batching` (sibling owns package.json) and call
  *      BatchFacilitatorClient.settle(), or enable the REST fetch() once DevRel
  *      confirms route + auth. This is the ONLY blocker on real settlement.
- *   2. resolveCreatorPayoutAddress(): wire a creator->address lookup from the store
- *      (creator-only; no fan data) instead of requiring creatorId to be an address.
+ *   2. resolveCreatorPayoutAddress(): DONE (TASK 1). A creator->address lookup is
+ *      now injected from the store (Store.getCreatorPayoutAddress) via the adapter
+ *      factory; creators register an address via POST
+ *      /api/creator/:creatorId/payout-address. Creator-only; no fan data. The
+ *      legacy "creatorId IS an address" path is kept as a fallback.
  *   3. Arc MAINNET: swap the viem `chain`, USDC address, Gateway Wallet, and CCTP
  *      domain for mainnet values (CONFIRM all four with DevRel).
  *

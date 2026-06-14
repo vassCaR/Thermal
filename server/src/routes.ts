@@ -34,6 +34,7 @@ import {
   subUsdc,
 } from "./usdc.js";
 import { verifyPresence } from "./verify.js";
+import { isAddress } from "viem";
 
 export interface Deps {
   cfg: Config;
@@ -174,6 +175,34 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
       return res;
     },
   );
+
+  // POST /api/creator/:creatorId/payout-address {payoutAddress} -> {ok, payoutAddress}
+  //
+  // Register (or overwrite) the on-chain 0x address a creator wants settlements
+  // paid to. This is the registry the REAL Circle adapter reads at settle time to
+  // map an opaque creatorId (e.g. "ghost:alice") to a payout address — see
+  // resolveCreatorPayoutAddress in adapters/circle.real.ts.
+  //
+  // PRIVACY: creator-only data. The payout address is the creator's own public
+  // address; no fan identity is read, stored, or derived. This endpoint is not in
+  // the FROZEN shared contract (shared/api.ts) — it is a creator-side admin route
+  // the server adds without changing the fan-facing contract, so the /web dev is
+  // unaffected. Body/response types are declared inline for the same reason.
+  app.post<{
+    Params: { creatorId: string };
+    Body: { payoutAddress?: string };
+  }>("/api/creator/:creatorId/payout-address", async (req, reply) => {
+    const { creatorId } = req.params;
+    const { payoutAddress } = req.body ?? {};
+    if (typeof payoutAddress !== "string" || !isAddress(payoutAddress)) {
+      return reply
+        .code(400)
+        .send({ error: "payoutAddress must be a valid 0x address" });
+    }
+    // Store the checksummed/validated address. isAddress narrows the type for us.
+    store.setCreatorPayoutAddress(creatorId, payoutAddress);
+    return { ok: true as const, payoutAddress };
+  });
 
   // POST /api/withdraw {creatorId, toAddress} -> {txRef}
   app.post<{ Body: WithdrawReq }>("/api/withdraw", async (req, reply) => {

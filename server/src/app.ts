@@ -38,7 +38,13 @@ export async function buildApp(overrides?: Partial<Config>): Promise<BuiltApp> {
   });
 
   const store = new Store();
-  const adapters = buildAdapters(cfg);
+  // Thread the creator-only payout-address lookup into the adapters. The real
+  // Circle adapter uses it to resolve creatorId -> on-chain payout address at
+  // settle time (TASK 1). PRIVACY: this resolver returns creator-owned data only;
+  // it has no access to and never derives any fan identity.
+  const adapters = buildAdapters(cfg, (creatorId) =>
+    store.getCreatorPayoutAddress(creatorId),
+  );
   const batcher = new Batcher(adapters.circle, store, cfg.batchIntervalMs, {
     onSettled: (info) =>
       app.log.info(
