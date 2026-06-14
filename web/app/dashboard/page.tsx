@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useWalletAddress } from "@/lib/wallet";
 import { api } from "@/lib/client";
@@ -10,7 +10,17 @@ import { spring } from "@/lib/motion";
 // useSearchParams => dynamic route (avoids the static prerender error)
 export const dynamic = "force-dynamic";
 
+// useSearchParams() must sit under a Suspense boundary or the production build
+// bails out of prerendering with a CSR error. Wrap the inner component below.
 export default function Dashboard() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardInner />
+    </Suspense>
+  );
+}
+
+function DashboardInner() {
   const sp = useSearchParams();
   const creatorId = sp.get("id") ?? "ghost:alice";
   const address = useWalletAddress();
