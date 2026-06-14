@@ -1,29 +1,22 @@
 "use client";
-/* eslint-disable react/no-unknown-property */
-import { useRef, useEffect } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
 
+import { useEffect, useRef } from "react";
 import "./Dither.css";
 
-// Single-pass dithered waves. The original React Bits version rendered the wave
-// to a texture and applied an ordered-dither post-process via
-// @react-three/postprocessing's EffectComposer. That composer takes over R3F's
-// render loop through a priority useFrame, and that takeover does NOT survive
-// dev re-mounts (StrictMode double-mount / Fast Refresh) — the loop dies and the
-// canvas freezes on its first frame. Here the wave + Bayer dither are merged into
-// one fullscreen fragment shader and driven by a component-owned rAF loop that
-// calls gl.render() directly, so animation is immune to R3F loop lifecycle.
+// Standalone WebGL2 implementation of the React Bits "Dither" background.
+// We deliberately do NOT use three.js / @react-three/fiber here: on some
+// ANGLE/D3D11 drivers R3F renders every frame (the loop ticks) but the browser
+// never presents the swapped buffer, so the canvas looks frozen. A hand-rolled
+// context with a plain requestAnimationFrame + drawArrays loop (exactly the path
+// a minimal WebGL test animates through) presents reliably on every GPU.
+// The wave field + 8x8 Bayer ordered-dither are merged into one fragment shader.
 
-const vertexShader = /* glsl */ `
-out vec2 vUv;
-void main() {
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
+const VERT = `#version 300 es
+in vec2 p;
+void main() { gl_Position = vec4(p, 0.0, 1.0); }
 `;
 
-const fragmentShader = /* glsl */ `
+const FRAG = `#version 300 es
 precision highp float;
 out vec4 fragColor;
 
@@ -106,8 +99,8 @@ vec3 dither(vec2 fragCoord, vec3 color) {
   int x = int(mod(scaledCoord.x, 8.0));
   int y = int(mod(scaledCoord.y, 8.0));
   float threshold = bayerMatrix8x8[y * 8 + x] - 0.25;
-  float step = 1.0 / (colorNum - 1.0);
-  color += threshold * step;
+  float stepv = 1.0 / (colorNum - 1.0);
+  color += threshold * stepv;
   float bias = 0.2;
   color = clamp(color - bias, 0.0, 1.0);
   return floor(color * (colorNum - 1.0) + 0.5) / (colorNum - 1.0);
@@ -115,7 +108,6 @@ vec3 dither(vec2 fragCoord, vec3 color) {
 
 void main() {
   vec2 fragCoord = gl_FragCoord.xy;
-  // pixelate the sampling coordinate (matches the original post-process pass)
   vec2 pixelCoord = (floor(fragCoord / pixelSize) + 0.5) * pixelSize;
   vec2 uv = pixelCoord / resolution.xy;
   uv -= 0.5;
@@ -137,122 +129,14 @@ void main() {
 }
 `;
 
-function DitheredWaves({
-  waveSpeed,
-  waveFrequency,
-  waveAmplitude,
-  waveColor,
-  colorNum,
-  pixelSize,
-  disableAnimation,
-  enableMouseInteraction,
-  mouseRadius,
-}) {
-  const meshRef = useRef(null);
-  const mouseRef = useRef(new THREE.Vector2(0, 0));
-  const startRef = useRef(0);
-  const prevColorRef = useRef([...waveColor]);
-  const { gl, size, viewport } = useThree();
-
-  // Latest props in a ref so the rAF loop always reads current values without
-  // restarting on every prop change.
-  const propsRef = useRef({});
-  propsRef.current = {
-    waveSpeed,
-    waveFrequency,
-    waveAmplitude,
-    waveColor,
-    colorNum,
-    pixelSize,
-    disableAnimation,
-    enableMouseInteraction,
-    mouseRadius,
-  };
-
-  const uniformsRef = useRef({
-    time: new THREE.Uniform(0),
-    resolution: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    waveSpeed: new THREE.Uniform(waveSpeed),
-    waveFrequency: new THREE.Uniform(waveFrequency),
-    waveAmplitude: new THREE.Uniform(waveAmplitude),
-    waveColor: new THREE.Uniform(new THREE.Color(...waveColor)),
-    mousePos: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    enableMouseInteraction: new THREE.Uniform(enableMouseInteraction ? 1 : 0),
-    mouseRadius: new THREE.Uniform(mouseRadius),
-    colorNum: new THREE.Uniform(colorNum),
-    pixelSize: new THREE.Uniform(pixelSize),
-  });
-
-  // Keep resolution in sync with the drawing buffer.
-  useEffect(() => {
-    const dpr = gl.getPixelRatio();
-    const w = Math.floor(size.width * dpr);
-    const h = Math.floor(size.height * dpr);
-    uniformsRef.current.resolution.value.set(w, h);
-  }, [size, gl]);
-
-  // Track the pointer at the window level so the ripple is felt across the whole
-  // central block, even where content sits above the canvas.
-  useEffect(() => {
-    const onPointerMove = (e) => {
-      if (!propsRef.current.enableMouseInteraction) return;
-      const rect = gl.domElement.getBoundingClientRect();
-      const dpr = gl.getPixelRatio();
-      mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
-    };
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onPointerMove);
-  }, [gl]);
-
-  // Canonical R3F render loop: frameloop="always" calls this every frame and R3F
-  // renders the scene itself (no EffectComposer, no manual gl.render). We only
-  // push the latest prop values into the uniforms here.
-  useFrame(({ clock }) => {
-    const u = uniformsRef.current;
-    const p = propsRef.current;
-
-    if (startRef.current === 0) startRef.current = clock.getElapsedTime();
-    if (!p.disableAnimation) {
-      u.time.value = clock.getElapsedTime() - startRef.current;
-    }
-
-    // Diagnostic: lets us read the loop state from the browser console.
-    if (typeof window !== "undefined") {
-      window.__dither = window.__dither || {};
-      window.__dither.tick = (window.__dither.tick || 0) + 1;
-      window.__dither.time = u.time.value;
-    }
-
-    u.waveSpeed.value = p.waveSpeed;
-    u.waveFrequency.value = p.waveFrequency;
-    u.waveAmplitude.value = p.waveAmplitude;
-    u.colorNum.value = p.colorNum;
-    u.pixelSize.value = p.pixelSize;
-    u.mouseRadius.value = p.mouseRadius;
-    u.enableMouseInteraction.value = p.enableMouseInteraction ? 1 : 0;
-
-    const prevColor = prevColorRef.current;
-    if (!prevColor.every((v, i) => v === p.waveColor[i])) {
-      u.waveColor.value.set(...p.waveColor);
-      prevColorRef.current = [...p.waveColor];
-    }
-
-    if (p.enableMouseInteraction) {
-      u.mousePos.value.copy(mouseRef.current);
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} scale={[viewport.width, viewport.height, 1]}>
-      <planeGeometry args={[1, 1]} />
-      <shaderMaterial
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={uniformsRef.current}
-        glslVersion={THREE.GLSL3}
-      />
-    </mesh>
-  );
+function compile(gl, type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error("Dither shader error:", gl.getShaderInfoLog(s));
+  }
+  return s;
 }
 
 export default function Dither({
@@ -266,25 +150,117 @@ export default function Dither({
   enableMouseInteraction = true,
   mouseRadius = 1,
 }) {
-  return (
-    <Canvas
-      className="dither-container"
-      frameloop="always"
-      camera={{ position: [0, 0, 6] }}
-      dpr={1}
-      gl={{ antialias: true, preserveDrawingBuffer: false }}
-    >
-      <DitheredWaves
-        waveSpeed={waveSpeed}
-        waveFrequency={waveFrequency}
-        waveAmplitude={waveAmplitude}
-        waveColor={waveColor}
-        colorNum={colorNum}
-        pixelSize={pixelSize}
-        disableAnimation={disableAnimation}
-        enableMouseInteraction={enableMouseInteraction}
-        mouseRadius={mouseRadius}
-      />
-    </Canvas>
-  );
+  const canvasRef = useRef(null);
+  const propsRef = useRef({});
+  propsRef.current = {
+    waveSpeed,
+    waveFrequency,
+    waveAmplitude,
+    waveColor,
+    colorNum,
+    pixelSize,
+    disableAnimation,
+    enableMouseInteraction,
+    mouseRadius,
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
+    if (!gl) {
+      console.error("Dither: WebGL2 not available");
+      return;
+    }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.error("Dither link error:", gl.getProgramInfoLog(prog));
+      return;
+    }
+    gl.useProgram(prog);
+
+    // Fullscreen triangle.
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const U = {
+      resolution: gl.getUniformLocation(prog, "resolution"),
+      time: gl.getUniformLocation(prog, "time"),
+      waveSpeed: gl.getUniformLocation(prog, "waveSpeed"),
+      waveFrequency: gl.getUniformLocation(prog, "waveFrequency"),
+      waveAmplitude: gl.getUniformLocation(prog, "waveAmplitude"),
+      waveColor: gl.getUniformLocation(prog, "waveColor"),
+      mousePos: gl.getUniformLocation(prog, "mousePos"),
+      enableMouseInteraction: gl.getUniformLocation(prog, "enableMouseInteraction"),
+      mouseRadius: gl.getUniformLocation(prog, "mouseRadius"),
+      colorNum: gl.getUniformLocation(prog, "colorNum"),
+      pixelSize: gl.getUniformLocation(prog, "pixelSize"),
+    };
+
+    const mouse = { x: 0, y: 0 };
+    let w = 0;
+    let h = 0;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+      h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      gl.viewport(0, 0, w, h);
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const onPointerMove = (e) => {
+      if (!propsRef.current.enableMouseInteraction) return;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      mouse.x = (e.clientX - rect.left) * dpr;
+      mouse.y = (e.clientY - rect.top) * dpr;
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+
+    let raf = 0;
+    const start = performance.now();
+    const render = () => {
+      const p = propsRef.current;
+      const t = p.disableAnimation ? 0 : (performance.now() - start) / 1000;
+      gl.uniform2f(U.resolution, w, h);
+      gl.uniform1f(U.time, t);
+      gl.uniform1f(U.waveSpeed, p.waveSpeed);
+      gl.uniform1f(U.waveFrequency, p.waveFrequency);
+      gl.uniform1f(U.waveAmplitude, p.waveAmplitude);
+      gl.uniform3f(U.waveColor, p.waveColor[0], p.waveColor[1], p.waveColor[2]);
+      gl.uniform2f(U.mousePos, mouse.x, mouse.y);
+      gl.uniform1i(U.enableMouseInteraction, p.enableMouseInteraction ? 1 : 0);
+      gl.uniform1f(U.mouseRadius, p.mouseRadius);
+      gl.uniform1f(U.colorNum, p.colorNum);
+      gl.uniform1f(U.pixelSize, p.pixelSize);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      raf = requestAnimationFrame(render);
+    };
+    raf = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("pointermove", onPointerMove);
+      gl.deleteBuffer(buf);
+      gl.deleteProgram(prog);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <canvas ref={canvasRef} className="dither-container" />;
 }
