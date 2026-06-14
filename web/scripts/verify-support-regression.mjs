@@ -1,0 +1,13 @@
+import { chromium } from "playwright";
+const b = await chromium.launch({ args: ["--use-gl=angle","--use-angle=swiftshader","--ignore-gpu-blocklist"] });
+const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+let err=null; p.on("pageerror",e=>err=e.message);
+await p.goto("http://localhost:3001",{waitUntil:"networkidle"});
+const before=(await p.getByTestId("supported-total").textContent())?.trim();
+await p.getByTestId("amount-5.00").click();
+await p.getByTestId("support-creators").click();
+await p.waitForTimeout(1500);
+const after=(await p.getByTestId("supported-total").textContent())?.trim();
+console.log(`support flow: ${before} -> ${after}`, after!==before?"OK":"FAIL");
+console.log("pageerror:", err||"none");
+await b.close();
