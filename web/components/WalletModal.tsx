@@ -136,7 +136,7 @@ export function WalletModal({
               <button
                 onClick={onClose}
                 aria-label="Close"
-                className="font-mono text-[11px] uppercase text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
+                className="font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] uppercase text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Esc
               </button>
@@ -161,7 +161,7 @@ export function WalletModal({
                     <span className="font-mono text-sm uppercase tracking-wide text-fg">
                       {w.name}
                     </span>
-                    <span className="truncate font-mono text-[11px] uppercase tracking-wide text-muted">
+                    <span className="truncate font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] uppercase tracking-wide text-muted">
                       {w.tag}
                     </span>
                   </span>
@@ -175,7 +175,7 @@ export function WalletModal({
               ))}
             </div>
 
-            <p className="shrink-0 border-t border-border px-4 py-3 font-mono text-[11px] leading-relaxed text-muted">
+            <p className="shrink-0 border-t border-border px-4 py-3 font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] leading-relaxed text-muted">
               Demo mode — wallets are simulated.
             </p>
           </motion.div>

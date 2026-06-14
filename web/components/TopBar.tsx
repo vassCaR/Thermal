@@ -19,7 +19,7 @@ function NetworkBadge() {
   return (
     <span
       title="Settlement network — Circle Arc (testnet)"
-      className="hidden items-center gap-2 border border-border/70 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-muted md:inline-flex"
+      className="hidden items-center gap-2 border border-border/70 px-3 py-1.5 font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] uppercase tracking-[0.15em] text-muted md:inline-flex"
     >
       <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
@@ -41,7 +41,7 @@ export function TopBar() {
         <div className="flex min-w-0 items-center gap-6 sm:gap-10 lg:gap-12">
           <a
             href="#top"
-            className="shrink-0 font-display text-lg font-extrabold uppercase tracking-[0.3em] text-fg transition-opacity hover:opacity-80 sm:text-xl"
+            className="shrink-0 font-display text-[clamp(1.05rem,0.9rem+0.8vw,1.35rem)] font-extrabold uppercase tracking-[0.3em] text-fg transition-opacity hover:opacity-80"
           >
             Thermal
           </a>
@@ -51,7 +51,7 @@ export function TopBar() {
                 <a
                   href={l.href}
                   {...(l.external ? { target: "_blank", rel: "noreferrer" } : {})}
-                  className="group relative inline-flex items-center px-1 py-2 font-mono text-[15px] uppercase tracking-[0.18em] text-muted transition-colors duration-200 hover:text-fg focus-visible:text-fg focus-visible:outline-none"
+                  className="group relative inline-flex items-center px-1 py-2 font-mono text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] uppercase tracking-[0.18em] text-muted transition-colors duration-200 hover:text-fg focus-visible:text-fg focus-visible:outline-none"
                 >
                   {l.label}
                   <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full group-focus-visible:w-full" />

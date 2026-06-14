@@ -24,7 +24,7 @@ export function HomeSections() {
 
 // Shared section rhythm: one consistent vertical padding scale everywhere so the
 // gaps between the 0x sections read evenly.
-const SECTION_PAD = "px-6 py-24 sm:py-32";
+const SECTION_PAD = "px-[clamp(1.25rem,5vw,4rem)] py-[clamp(3.5rem,7vw,8rem)]";
 
 function Section({
   id,
@@ -51,7 +51,7 @@ function SectionHead({ index, label }: { index?: string; label: string }) {
       {index && (
         <span className="font-mono text-sm tabular-nums text-accent/80">{index}</span>
       )}
-      <span className="shrink-0 font-mono text-[13px] uppercase tracking-[0.25em] text-accent">
+      <span className="shrink-0 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] uppercase tracking-[0.25em] text-accent">
         {label}
       </span>
       <span className="h-px grow bg-gradient-to-r from-accent/40 to-transparent" />
@@ -73,7 +73,7 @@ function HelmetSplit() {
           <div>
             <SectionHead label="Sensor / Infrared" />
             <h2 className="gt-section-title">Sees heat, not faces</h2>
-            <p className="mt-6 max-w-md font-display text-[15px] leading-relaxed text-fg/75">
+            <p className="mt-6 max-w-md font-display text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] leading-relaxed text-fg/75">
               Thermal optics read the warmth a signal gives off, never its
               identity. Inspect the unit from every angle — drag to orbit, or
               scroll to sweep the view.
@@ -100,7 +100,7 @@ function WhoWeAre() {
         </h2>
       </Reveal>
       <Reveal delay={0.1}>
-        <p className="mt-6 max-w-2xl font-mono text-[15px] leading-relaxed text-fg/80">
+        <p className="mt-6 max-w-2xl font-mono text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] leading-relaxed text-fg/80">
           Thermal is a private support platform for content creators and
           journalists. You back the voices that matter while the link between you
           and who you support stays completely anonymous — no one, not even us, can
@@ -118,7 +118,7 @@ function WhoWeAre() {
               <p className="font-display text-lg font-black uppercase text-accent">
                 {title}
               </p>
-              <p className="mt-3 font-mono text-[13px] leading-relaxed text-muted">
+              <p className="mt-3 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] leading-relaxed text-muted">
                 {body}
               </p>
             </div>
@@ -151,7 +151,7 @@ function HowItWorks() {
               <p className="font-display text-xl font-black uppercase text-fg">
                 {title}
               </p>
-              <p className="font-mono text-[13px] leading-relaxed text-muted">
+              <p className="font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] leading-relaxed text-muted">
                 {body}
               </p>
             </div>
@@ -176,7 +176,7 @@ function WhyPrivacy() {
           <h2 className="gt-section-title">
             Backing someone shouldn&apos;t expose you
           </h2>
-          <p className="mt-6 font-mono text-[15px] leading-relaxed text-fg/80">
+          <p className="mt-6 font-mono text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] leading-relaxed text-fg/80">
             Public tipping turns your support into a permanent, searchable record.
             Thermal keeps the act of giving private by design, so who you fund is
             nobody&apos;s business but yours.
@@ -191,7 +191,7 @@ function WhyPrivacy() {
                   <p className="font-display text-base font-black uppercase text-fg">
                     {title}
                   </p>
-                  <p className="mt-1 font-mono text-[13px] leading-relaxed text-muted">
+                  <p className="mt-1 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] leading-relaxed text-muted">
                     {body}
                   </p>
                 </div>
@@ -214,10 +214,10 @@ function TheProblem() {
       <div className="mt-12 grid gap-4 md:grid-cols-2">
         <Reveal>
           <div className="h-full border border-border bg-black/55 p-7 backdrop-blur">
-            <p className="font-mono text-[13px] uppercase tracking-[0.2em] text-muted">
+            <p className="font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] uppercase tracking-[0.2em] text-muted">
               Public tipping
             </p>
-            <ul className="mt-5 space-y-3 font-mono text-[13px] leading-relaxed text-muted">
+            <ul className="mt-5 space-y-3 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] leading-relaxed text-muted">
               <li>— Everyone can see who you back</li>
               <li>— Donations are permanent and searchable</li>
               <li>— Supporters can be targeted or doxxed</li>
@@ -227,10 +227,10 @@ function TheProblem() {
         </Reveal>
         <Reveal delay={0.1}>
           <div className="h-full border-2 border-accent bg-accent/10 p-7 backdrop-blur">
-            <p className="font-mono text-[13px] uppercase tracking-[0.2em] text-accent">
+            <p className="font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] uppercase tracking-[0.2em] text-accent">
               Thermal
             </p>
-            <ul className="mt-5 space-y-3 font-mono text-[13px] leading-relaxed text-fg/90">
+            <ul className="mt-5 space-y-3 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] leading-relaxed text-fg/90">
               <li>— Nobody sees who you support</li>
               <li>— The fan→creator link stays off-ledger</li>
               <li>— Supporters stay anonymous and safe</li>
@@ -262,7 +262,7 @@ function PrivacyCanvas() {
           </div>
         </Reveal>
         <Reveal delay={0.12}>
-          <p className="mx-auto mt-6 max-w-2xl text-center font-display text-[15px] leading-relaxed text-fg/70">
+          <p className="mx-auto mt-6 max-w-2xl text-center font-display text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] leading-relaxed text-fg/70">
             Thermal imaging reads the heat a body can&apos;t hide — presence leaks,
             even in the dark. Your data carries the same signature. Thermal keeps
             yours unreadable: exposed to no one, traceable by nothing.
@@ -281,7 +281,7 @@ function FinalCta() {
           <h2 className="gt-section-title max-w-3xl">
             Ready to support, privately?
           </h2>
-          <p className="max-w-xl font-mono text-[15px] leading-relaxed text-fg/80">
+          <p className="max-w-xl font-mono text-[clamp(0.85rem,0.72rem+0.6vw,0.95rem)] leading-relaxed text-fg/80">
             Scroll back up, hold the button, and start backing the voices that
             matter — without anyone knowing it&apos;s you.
           </p>
@@ -293,7 +293,7 @@ function FinalCta() {
               href="https://github.com/vassCaR/ghost-tips"
               target="_blank"
               rel="noreferrer"
-              className="gt-frame-link min-w-[180px]"
+              className="gt-frame-link min-w-[clamp(9rem,40vw,11.25rem)]"
             >
               <span>GitHub</span>
               <span aria-hidden>&rarr;</span>

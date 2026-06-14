@@ -23,7 +23,7 @@ export default function CreatorPage() {
 
       <CtaButtons creatorId={creatorId} />
 
-      <a href="/" className="gt-frame-link min-w-[180px] justify-center">
+      <a href="/" className="gt-frame-link min-w-[clamp(9rem,40vw,11.25rem)] justify-center">
         <span>Back home</span>
         <span aria-hidden>&larr;</span>
       </a>

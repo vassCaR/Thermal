@@ -43,15 +43,19 @@ body {
 }
 
 @layer components {
-  /* Brutalist framed button: square corners, hard border, invert-to-orange hover */
+  /* Brutalist framed button: square corners, hard border, invert-to-orange hover.
+     Fluid padding + type so it scales with the viewport. */
   .gt-brutal-btn {
-    @apply inline-flex select-none items-center justify-center gap-2 border-2 border-fg bg-transparent px-8 py-5 font-mono text-lg uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
+    @apply inline-flex select-none items-center justify-center gap-2 border-2 border-fg bg-transparent font-mono uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
+    padding: clamp(0.7rem, 2.2vw, 1.25rem) clamp(1.25rem, 3vw, 2rem);
+    font-size: clamp(0.95rem, 0.8rem + 0.7vw, 1.125rem);
     border-radius: 0;
   }
 
   /* Framed sidebar link */
   .gt-frame-link {
-    @apply flex items-center justify-between gap-2 border border-border px-3 py-2 font-mono text-[15px] uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
+    @apply flex items-center justify-between gap-2 border border-border px-3 py-2 font-mono uppercase tracking-wide text-fg outline-none transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-bg focus-visible:ring-2 focus-visible:ring-accent;
+    font-size: clamp(0.85rem, 0.78rem + 0.4vw, 0.95rem);
     border-radius: 0;
   }
 
@@ -64,20 +68,23 @@ body {
     @apply font-mono text-xs leading-relaxed text-muted;
   }
 
-  /* Brutalist content card for the scrollable sections */
+  /* Brutalist content card for the scrollable sections — fluid padding. */
   .gt-card {
-    @apply border border-border bg-black/55 p-7 backdrop-blur transition-colors duration-200 hover:border-accent;
+    @apply border border-border bg-black/55 backdrop-blur transition-colors duration-200 hover:border-accent;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
     border-radius: 0;
   }
 
   /* Section eyebrow ("01 / HOW IT WORKS") */
   .gt-eyebrow {
-    @apply mb-4 inline-flex items-center gap-3 font-mono text-[13px] uppercase tracking-[0.2em] text-accent;
+    @apply mb-4 inline-flex items-center gap-3 font-mono uppercase tracking-[0.2em] text-accent;
+    font-size: clamp(0.72rem, 0.66rem + 0.3vw, 0.82rem);
   }
 
-  /* Big section heading */
+  /* Big section heading — fluid between mobile and desktop. */
   .gt-section-title {
-    @apply font-display text-4xl font-black uppercase leading-[0.95] text-fg sm:text-6xl;
+    @apply font-display font-black uppercase leading-[0.95] text-fg;
+    font-size: clamp(2rem, 1.1rem + 4.2vw, 3.75rem);
   }
 
   /* Back-compat for the creator/dashboard pages, brutalist-aligned (square corners) */

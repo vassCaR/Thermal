@@ -102,7 +102,7 @@ function DashboardInner() {
         <p className="font-display text-lg font-black uppercase text-fg">
           Become a creator
         </p>
-        <label className="block font-mono text-[12px] uppercase tracking-wide text-muted">
+        <label className="block font-mono text-[clamp(0.72rem,0.66rem+0.3vw,0.78rem)] uppercase tracking-wide text-muted">
           Your creator handle
           <input
             type="text"
@@ -116,7 +116,7 @@ function DashboardInner() {
             className="mt-2 w-full border border-border bg-transparent px-3 py-2 text-center font-mono text-base lowercase text-fg outline-none focus:border-accent"
           />
         </label>
-        <p className="font-mono text-[12px] leading-relaxed text-muted">
+        <p className="font-mono text-[clamp(0.72rem,0.66rem+0.3vw,0.78rem)] leading-relaxed text-muted">
           Payout wallet:{" "}
           <span className={realWallet ? "text-accent" : "text-fg/60"}>
             {realWallet ? address : "connect a wallet (top-right) to set payout"}
@@ -147,7 +147,7 @@ function DashboardInner() {
         >
           {total}
         </motion.p>
-        <p className="font-mono text-[11px] leading-relaxed text-muted">
+        <p className="font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] leading-relaxed text-muted">
           No fan identity is stored. It is impossible to know who supported you.
         </p>
         <button

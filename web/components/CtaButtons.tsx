@@ -166,7 +166,7 @@ export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
           signed for real (EIP-191) — only the USDC settlement stays simulated. */}
       <span
         data-testid="demo-badge"
-        className="inline-flex items-center gap-2 border border-accent/60 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-accent"
+        className="inline-flex items-center gap-2 border border-accent/60 px-3 py-1 font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] uppercase tracking-[0.2em] text-accent"
       >
         <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
         {signer.real ? "Live wallet · settlement simulated" : "Demo mode — simulated"}
@@ -175,7 +175,7 @@ export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
       {/* Creator selector — choose who to support (hidden when fixed by a page) */}
       {!creatorId && (
         <div className="flex flex-col items-center gap-2">
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+          <span className="font-mono text-[clamp(0.66rem,0.6rem+0.25vw,0.72rem)] uppercase tracking-[0.2em] text-muted">
             supporting
           </span>
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -189,7 +189,7 @@ export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
                   aria-pressed={active}
                   disabled={busy}
                   onClick={() => setCreator(c)}
-                  className={`border px-3 py-1.5 font-mono text-[13px] lowercase tracking-wide outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 ${
+                  className={`border px-3 py-1.5 font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] lowercase tracking-wide outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 ${
                     active
                       ? "border-accent text-accent"
                       : "border-border text-muted hover:border-accent hover:text-fg"
@@ -207,7 +207,7 @@ export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
               aria-label="Creator handle to support"
               onChange={(e) => setCreator(e.target.value)}
               placeholder="ghost:handle"
-              className="w-36 border border-border bg-transparent px-3 py-1.5 text-center font-mono text-[13px] lowercase text-fg outline-none transition-colors focus:border-accent placeholder:text-muted/70 disabled:opacity-50"
+              className="w-[clamp(7rem,30vw,9rem)] border border-border bg-transparent px-3 py-1.5 text-center font-mono text-[clamp(0.78rem,0.7rem+0.4vw,0.82rem)] lowercase text-fg outline-none transition-colors focus:border-accent placeholder:text-muted/70 disabled:opacity-50"
             />
           </div>
         </div>
@@ -250,7 +250,7 @@ export function CtaButtons({ creatorId }: { creatorId?: string } = {}) {
             data-testid="amount-custom"
             aria-label="Custom amount in USDC"
             onChange={(e) => setCustom(e.target.value)}
-            className="w-24 bg-transparent text-center outline-none placeholder:text-muted/70 disabled:opacity-50"
+            className="w-[clamp(4.5rem,18vw,6rem)] bg-transparent text-center outline-none placeholder:text-muted/70 disabled:opacity-50"
           />
           <span className="ml-1 text-muted">USDC</span>
         </label>
