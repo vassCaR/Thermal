@@ -3,7 +3,10 @@ import localFont from "next/font/local";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { DitherBackground } from "@/components/DitherBackground";
+// Variant B (branch background-efecto): Efecto-style thermal gradient-map field.
+// Variant A (branch master): React Bits Dither. Both export DitherBackground, so
+// only this import line differs between the two background branches.
+import { DitherBackground } from "@/components/EfectoBackground";
 import { TopBar } from "@/components/TopBar";
 import { CrosshairCursor } from "@/components/CrosshairCursor";
 
