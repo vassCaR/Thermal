@@ -81,7 +81,7 @@ function WhoWeAre() {
       </Reveal>
       <Reveal delay={0.1}>
         <p className="mt-6 max-w-2xl font-mono text-[15px] leading-relaxed text-fg/80">
-          Ghost is a private support platform for content creators and
+          Thermal is a private support platform for content creators and
           journalists. You back the voices that matter while the link between you
           and who you support stays completely anonymous — no one, not even us, can
           see who you fund.
@@ -158,7 +158,7 @@ function WhyPrivacy() {
           </h2>
           <p className="mt-6 font-mono text-[15px] leading-relaxed text-fg/80">
             Public tipping turns your support into a permanent, searchable record.
-            Ghost keeps the act of giving private by design, so who you fund is
+            Thermal keeps the act of giving private by design, so who you fund is
             nobody&apos;s business but yours.
           </p>
         </Reveal>
@@ -208,7 +208,7 @@ function TheProblem() {
         <Reveal delay={0.1}>
           <div className="h-full border-2 border-accent bg-accent/10 p-7 backdrop-blur">
             <p className="font-mono text-[13px] uppercase tracking-[0.2em] text-accent">
-              Ghost
+              Thermal
             </p>
             <ul className="mt-5 space-y-3 font-mono text-[13px] leading-relaxed text-fg/90">
               <li>— Nobody sees who you support</li>
@@ -231,7 +231,7 @@ function PrivacyCanvas() {
     >
       <div className="mx-auto w-full max-w-6xl">
         <Reveal>
-          <p className="gt-eyebrow text-center">THE PRINCIPLE</p>
+          <p className="gt-eyebrow text-center">THERMAL SIGNATURE</p>
         </Reveal>
         <Reveal delay={0.08}>
           {/* Wide, short stage for the extruded wireframe word. */}
@@ -242,9 +242,10 @@ function PrivacyCanvas() {
           </div>
         </Reveal>
         <Reveal delay={0.12}>
-          <p className="mx-auto mt-6 max-w-xl text-center font-display text-[15px] leading-relaxed text-fg/70">
-            Privacy isn&apos;t a feature bolted on top — it&apos;s the structure
-            everything else is built around.
+          <p className="mx-auto mt-6 max-w-2xl text-center font-display text-[15px] leading-relaxed text-fg/70">
+            Thermal imaging reads the heat a body can&apos;t hide — presence leaks,
+            even in the dark. Your data carries the same signature. Thermal keeps
+            yours unreadable: exposed to no one, traceable by nothing.
           </p>
         </Reveal>
       </div>

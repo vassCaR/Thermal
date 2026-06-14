@@ -50,10 +50,18 @@ export default function ModelViewer({
     };
   }, []);
 
-  // Scroll-linked camera orbit (smoothly tweened by model-viewer itself).
+  // Scroll-linked camera through named views: side -> face/lens -> top.
+  // model-viewer tweens each camera-orbit change, so frequent small updates read
+  // as one smooth, eased sweep as the section scrolls past.
   useEffect(() => {
     const el = ref.current;
     if (!el || !ready || reducedRef.current) return;
+    // theta = azimuth, phi = polar (0deg = top-down, 90deg = equator/side)
+    const KF = [
+      { p: 0.0, theta: 90, phi: 90 }, // side / profile
+      { p: 0.5, theta: 0, phi: 86 }, // face / lens
+      { p: 1.0, theta: 0, phi: 10 }, // top-down
+    ];
     let inView = false;
     const io = new IntersectionObserver(([e]) => (inView = e.isIntersecting), { threshold: 0 });
     io.observe(el);
@@ -61,9 +69,19 @@ export default function ModelViewer({
       if (!inView) return;
       const r = el.getBoundingClientRect();
       const prog = 1 - Math.min(Math.max((r.top + r.height / 2) / window.innerHeight, 0), 1);
-      const theta = 25 + prog * 150; // deg, sweeps around as the section scrolls
-      const phi = 70 + prog * 25;
-      el.setAttribute("camera-orbit", `${theta}deg ${phi}deg auto`);
+      let a = KF[0];
+      let b = KF[KF.length - 1];
+      for (let i = 0; i < KF.length - 1; i++) {
+        if (prog >= KF[i].p && prog <= KF[i + 1].p) {
+          a = KF[i];
+          b = KF[i + 1];
+          break;
+        }
+      }
+      const t = b.p === a.p ? 0 : (prog - a.p) / (b.p - a.p);
+      const theta = a.theta + (b.theta - a.theta) * t;
+      const phi = a.phi + (b.phi - a.phi) * t;
+      el.setAttribute("camera-orbit", `${theta.toFixed(1)}deg ${phi.toFixed(1)}deg auto`);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -90,13 +108,13 @@ export default function ModelViewer({
         src,
         alt: "Holosun DRS-TH thermal optic — interactive 3D model",
         "camera-controls": true,
-        "auto-rotate": reducedRef.current ? undefined : true,
-        "rotation-per-second": "18deg",
         "interaction-prompt": "none",
         "disable-zoom": true,
         exposure: "0.95",
         "shadow-intensity": "0.4",
-        "camera-orbit": "25deg 75deg auto",
+        // Scroll drives the orbit (side -> face -> top); start on the side view.
+        // Reduced motion: a fixed 3/4 view, no scroll-driving.
+        "camera-orbit": reducedRef.current ? "45deg 80deg auto" : "90deg 90deg auto",
         style: { width: "100%", height: "100%", backgroundColor: "transparent" },
       })}
     </div>

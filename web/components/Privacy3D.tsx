@@ -44,7 +44,8 @@ const FRAG = `#version 300 es
 precision highp float;
 out vec4 o;
 uniform float alpha;
-void main() { o = vec4(1.0, 1.0, 1.0, alpha); }`;
+// Warm thermal "hot" edge color (iron palette peak) for the wireframe.
+void main() { o = vec4(1.0, 0.82, 0.45, alpha); }`;
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   const s = gl.createShader(type)!;
