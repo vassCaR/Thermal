@@ -22,6 +22,10 @@ export function HomeSections() {
   );
 }
 
+// Shared section rhythm: one consistent vertical padding scale everywhere so the
+// gaps between the 0x sections read evenly.
+const SECTION_PAD = "px-6 py-24 sm:py-32";
+
 function Section({
   id,
   children,
@@ -32,10 +36,26 @@ function Section({
   return (
     <section
       id={id}
-      className="border-t border-border/50 bg-white/[0.025] px-6 py-24 backdrop-blur-md sm:py-32"
+      className={`border-t border-border/50 bg-white/[0.025] ${SECTION_PAD} backdrop-blur-md`}
     >
       <div className="mx-auto w-full max-w-5xl">{children}</div>
     </section>
+  );
+}
+
+/** Consistent section header: index + label + a hairline that fills the row,
+ *  giving every 0x section the same visual anchor and even spacing below. */
+function SectionHead({ index, label }: { index?: string; label: string }) {
+  return (
+    <div className="mb-10 flex items-center gap-4">
+      {index && (
+        <span className="font-mono text-sm tabular-nums text-accent/80">{index}</span>
+      )}
+      <span className="shrink-0 font-mono text-[13px] uppercase tracking-[0.25em] text-accent">
+        {label}
+      </span>
+      <span className="h-px grow bg-gradient-to-r from-accent/40 to-transparent" />
+    </div>
   );
 }
 
@@ -46,12 +66,12 @@ function HelmetSplit() {
   return (
     <section
       id="optic"
-      className="border-t border-border/50 bg-white/[0.025] px-6 py-24 backdrop-blur-md sm:py-32"
+      className={`border-t border-border/50 bg-white/[0.025] ${SECTION_PAD} backdrop-blur-md`}
     >
       <div className="mx-auto grid w-full max-w-5xl items-center gap-12 lg:grid-cols-2">
         <Reveal>
           <div>
-            <p className="gt-eyebrow">SENSOR / INFRARED</p>
+            <SectionHead label="Sensor / Infrared" />
             <h2 className="gt-section-title">Sees heat, not faces</h2>
             <p className="mt-6 max-w-md font-display text-[15px] leading-relaxed text-fg/75">
               Thermal optics read the warmth a signal gives off, never its
@@ -74,7 +94,7 @@ function WhoWeAre() {
   return (
     <Section id="about">
       <Reveal>
-        <p className="gt-eyebrow">00 / WHO WE ARE</p>
+        <SectionHead index="00" label="Who we are" />
         <h2 className="gt-section-title max-w-3xl">
           Support that leaves no trace
         </h2>
@@ -118,7 +138,7 @@ function HowItWorks() {
   return (
     <Section id="how">
       <Reveal>
-        <p className="gt-eyebrow">01 / HOW IT WORKS</p>
+        <SectionHead index="01" label="How it works" />
         <h2 className="gt-section-title">Three moves, zero exposure</h2>
       </Reveal>
       <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -152,7 +172,7 @@ function WhyPrivacy() {
     <Section id="privacy">
       <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
         <Reveal>
-          <p className="gt-eyebrow">02 / WHY PRIVACY</p>
+          <SectionHead index="02" label="Why privacy" />
           <h2 className="gt-section-title">
             Backing someone shouldn&apos;t expose you
           </h2>
@@ -188,7 +208,7 @@ function TheProblem() {
   return (
     <Section id="problem">
       <Reveal>
-        <p className="gt-eyebrow">03 / THE PROBLEM</p>
+        <SectionHead index="03" label="The problem" />
         <h2 className="gt-section-title">Public money, public risk</h2>
       </Reveal>
       <div className="mt-12 grid gap-4 md:grid-cols-2">
@@ -227,7 +247,7 @@ function PrivacyCanvas() {
   return (
     <section
       id="privacy-3d"
-      className="border-t border-border/50 bg-white/[0.025] px-6 py-20 backdrop-blur-md sm:py-28"
+      className={`border-t border-border/50 bg-white/[0.025] ${SECTION_PAD} backdrop-blur-md`}
     >
       <div className="mx-auto w-full max-w-6xl">
         <Reveal>

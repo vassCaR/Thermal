@@ -36,9 +36,9 @@ function NetworkBadge() {
 export function TopBar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-black/40 backdrop-blur-md">
-      <nav className="mx-auto box-border flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-5 sm:px-10">
+      <nav className="box-border flex w-full items-center justify-between gap-4 px-6 py-5 sm:px-10 lg:px-14">
         {/* Left cluster: wordmark + nav links */}
-        <div className="flex min-w-0 items-center gap-6 sm:gap-10">
+        <div className="flex min-w-0 items-center gap-6 sm:gap-10 lg:gap-12">
           <a
             href="#top"
             className="shrink-0 font-display text-lg font-extrabold uppercase tracking-[0.3em] text-fg transition-opacity hover:opacity-80 sm:text-xl"
