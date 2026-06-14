@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { DYNAMIC_ENABLED } from "@/lib/wallet";
-import { WalletModal, WALLETS, type WalletOption } from "@/components/WalletModal";
+import { WalletModal, type WalletOption } from "@/components/WalletModal";
 
 interface ConnectedWallet {
   id: string;
   name: string;
-  color: string;
+  logo: string;
   address: string;
 }
 
@@ -50,7 +50,7 @@ export function ConnectButton() {
     const wallet: ConnectedWallet = {
       id: w.id,
       name: w.name,
-      color: w.color,
+      logo: w.logo,
       address: randomAddress(),
     };
     setConnected(wallet);
@@ -64,7 +64,6 @@ export function ConnectButton() {
   }
 
   if (connected) {
-    const w = WALLETS.find((x) => x.id === connected.id);
     return (
       <button
         type="button"
@@ -73,11 +72,9 @@ export function ConnectButton() {
         title={`${connected.name} — click to disconnect`}
         className="gt-brutal-btn group"
       >
-        <span
-          className="flex h-5 w-5 shrink-0 items-center justify-center"
-          style={{ backgroundColor: connected.color }}
-        >
-          {w?.glyph}
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={connected.logo} alt="" className="h-4 w-4 object-contain" />
         </span>
         <span className="normal-case">{truncate(connected.address)}</span>
         <span className="text-[10px] text-accent group-hover:text-bg">[demo]</span>
