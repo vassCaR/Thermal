@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useWalletAddress } from "@/lib/wallet";
+import { useWalletAddress, useTipSigner } from "@/lib/wallet";
 import { api, ApiError } from "@/lib/client";
-import { signTip } from "@/lib/tip";
+import { signTipMock, type TipSignFn } from "@/lib/tip";
 
 const FEATURED_CREATOR = "ghost:alice";
 const DEMO_FUNDING = "100.000000"; // auto-funded so the demo never hits "insufficient funds"
@@ -23,6 +23,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  *  Account + funding live in refs (in-memory, no localStorage). */
 export function CtaButtons() {
   const address = useWalletAddress();
+  const signer = useTipSigner();
   const [amount, setAmount] = useState<string>("1.00");
   const [custom, setCustom] = useState("");
   const [busy, setBusy] = useState(false);
@@ -65,13 +66,15 @@ export function CtaButtons() {
 
   // Core money path shared by the manual button AND the demo runner: sign + tip
   // an explicit amount, then refresh the fan-only "supported so far" total.
+  // `sign` is injected so the manual flow can use a REAL wallet signature while
+  // the scripted demo uses the mock signer (no per-tip wallet popups).
   // Recovers once from a server restart (404) or depleted balance (402).
   const supportOnce = useCallback(
-    async (value: string) => {
+    async (value: string, sign: TipSignFn) => {
       let fan = await ensureFunded();
       const tip = async (f: string) => {
         nonceRef.current += 1;
-        const auth = await signTip({
+        const auth = await sign({
           fanAccountId: f,
           creatorId: FEATURED_CREATOR,
           amount: value,
@@ -109,14 +112,20 @@ export function CtaButtons() {
     setBusy(true);
     setError(null);
     try {
-      await supportOnce(value);
+      // Real wallet signature when connected; mock otherwise.
+      await supportOnce(value, signer.sign);
     } catch (e) {
       console.error(e);
-      setError("Could not send support — is the server (:8787) running?");
+      const msg = e instanceof Error ? e.message : "";
+      setError(
+        /signature|rejected/i.test(msg)
+          ? "Signature rejected in your wallet — support not sent."
+          : "Could not send support — is the server (:8787) running?",
+      );
     } finally {
       setBusy(false);
     }
-  }, [value, supportOnce]);
+  }, [value, supportOnce, signer.sign]);
 
   // Scripted happy-path demo. Reuses supportOnce (no duplicated business logic);
   // every step is clearly labelled "simulated" to stay honest with judges.
@@ -132,7 +141,7 @@ export function CtaButtons() {
         setDemoStep(`② Selected ${amt} USDC`);
         await sleep(550);
         setDemoStep("③ Sending private support…");
-        await supportOnce(Number(amt).toFixed(6));
+        await supportOnce(Number(amt).toFixed(6), signTipMock);
         await sleep(450);
       }
       setDemoStep("④ Settled on Arc testnet — simulated");
@@ -149,13 +158,14 @@ export function CtaButtons() {
 
   return (
     <div className="flex w-full flex-col items-center gap-5">
-      {/* Honest mode badge — the whole flow runs against MOCK adapters. */}
+      {/* Honest mode badge. When a real wallet is connected, each support is
+          signed for real (EIP-191) — only the USDC settlement stays simulated. */}
       <span
         data-testid="demo-badge"
         className="inline-flex items-center gap-2 border border-accent/60 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-accent"
       >
         <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
-        Demo mode — simulated
+        {signer.real ? "Live wallet · settlement simulated" : "Demo mode — simulated"}
       </span>
 
       {/* Amount selector: presets + custom field */}

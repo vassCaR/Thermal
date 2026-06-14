@@ -1,6 +1,7 @@
 "use client";
 
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { signTipMock, signTipWithWallet, type TipSignFn } from "./tip";
 
 export const DYNAMIC_ENV_ID = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID ?? "";
 export const DYNAMIC_ENABLED =
@@ -22,4 +23,29 @@ export function useWalletAddress(): string {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const { primaryWallet } = useDynamicContext();
   return primaryWallet?.address ?? MOCK_ADDRESS;
+}
+
+export interface TipSigner {
+  /** true => each tip is signed by a real connected wallet (EIP-191). */
+  real: boolean;
+  sign: TipSignFn;
+}
+
+/**
+ * Returns the tip signer for the current wallet state:
+ *   - real EIP-191 signing when a Dynamic wallet is connected,
+ *   - mock signature otherwise (demo mode / not connected).
+ * DYNAMIC_ENABLED is a build constant so the hook order is stable at runtime.
+ */
+export function useTipSigner(): TipSigner {
+  if (!DYNAMIC_ENABLED) return { real: false, sign: signTipMock };
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { primaryWallet } = useDynamicContext();
+  if (primaryWallet && typeof primaryWallet.signMessage === "function") {
+    return {
+      real: true,
+      sign: signTipWithWallet((m) => primaryWallet.signMessage(m)),
+    };
+  }
+  return { real: false, sign: signTipMock };
 }

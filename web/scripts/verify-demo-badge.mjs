@@ -1,0 +1,12 @@
+import { chromium } from "playwright";
+const b = await chromium.launch({ args: ["--use-gl=angle","--use-angle=swiftshader","--ignore-gpu-blocklist"] });
+const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+let err=null; p.on("pageerror",e=>err=e.message);
+await p.goto("http://localhost:3001",{waitUntil:"networkidle"});
+const badge=(await p.getByTestId("demo-badge").textContent())?.trim();
+console.log("badge (no wallet):", badge);
+await p.getByTestId("run-demo").click();
+await p.getByTestId("demo-step").filter({hasText:/complete/i}).waitFor({timeout:20000}).then(()=>console.log("Run Demo: OK")).catch(()=>console.log("Run Demo: FAIL"));
+const total=(await p.getByTestId("supported-total").textContent())?.trim();
+console.log("total after demo:", total, "pageerror:", err||"none");
+await b.close();
