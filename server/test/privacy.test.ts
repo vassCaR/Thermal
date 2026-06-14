@@ -85,12 +85,10 @@ test("privacy: no fan identifier reaches the settlement adapter or its result", 
 
   const batcher = new Batcher(spy, store, 10_000 /* never auto-fires in test */);
 
-  // Drive a few tips through the batcher. NOTE: SettlementItem has no field for a
-  // fan identity by design — but we go further and prove the *type* refusal is
-  // also honoured at runtime by attempting (via a cast) to smuggle one in, and
-  // showing it never reaches the captured input. We do NOT actually add the
-  // forbidden field here because routes.ts constructs the item without it; this
-  // test instead asserts the items the batcher emits are clean.
+  // Drive a few tips through the batcher. SettlementItem has no field for a fan
+  // identity by design; here we assert that what actually crosses the boundary at
+  // runtime (the captured input, the result, and the creator record) contains
+  // none of the distinctive fan tokens declared above.
   for (let nonce = 1; nonce <= 4; nonce++) {
     batcher.add({ creatorId, amount: "0.002000", nonce, ts: Date.now() });
   }
