@@ -234,6 +234,11 @@ export default function Dither({
     let raf = 0;
     const start = performance.now();
     const render = () => {
+      // Pause work while the tab is hidden (perf / battery).
+      if (typeof document !== "undefined" && document.hidden) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
       const p = propsRef.current;
       const t = p.disableAnimation ? 0 : (performance.now() - start) / 1000;
       gl.uniform2f(U.resolution, w, h);
