@@ -19,9 +19,9 @@ const rigid = localFont({
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Ghost",
+  title: "Thermal",
   description:
-    "Ghost — support creators privately. Per-second, anonymous support for creators and journalists.",
+    "Thermal — support creators privately. Per-second, anonymous support for creators and journalists.",
 };
 
 export default function RootLayout({

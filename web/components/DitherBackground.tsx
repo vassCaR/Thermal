@@ -6,10 +6,10 @@ import { useEffect, useRef, useState } from "react";
 // WebGL component → client-only, never SSR'd. Fills its (relative) parent.
 const Dither = dynamic(() => import("./Dither/Dither"), { ssr: false });
 
-/** Ghost/cyber dithered waves (cold cyan) behind the content. Slow + heavily
- *  pixelated; paused when off-viewport (IntersectionObserver), when the tab is
- *  hidden, or when the user prefers reduced motion. Mouse interaction is off —
- *  the CrosshairCursor overlay replaces the old pointer halo. */
+/** Variant A background — thermal/iron dithered waves (heat zones) behind the
+ *  content. Slow + heavily pixelated; paused when off-viewport (IntersectionObserver),
+ *  when the tab is hidden, or when the user prefers reduced motion. Mouse
+ *  interaction is off — the CrosshairCursor overlay replaces the old pointer halo. */
 export function DitherBackground() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [reduced, setReduced] = useState(false);

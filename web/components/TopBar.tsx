@@ -29,7 +29,7 @@ export function TopBar() {
         <a href="#top" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <GhostLogo className="h-5 w-5" />
           <span className="font-display text-sm font-extrabold uppercase tracking-[0.25em] text-fg">
-            Ghost
+            Thermal
           </span>
         </a>
       </nav>
