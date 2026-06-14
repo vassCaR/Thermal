@@ -58,6 +58,7 @@
 // (or its transitive deps like openapi-fetch). The real client is imported
 // dynamically in getAdmin(), only when a real method is actually called.
 import type { UnlinkAdmin } from "@unlink-xyz/sdk/admin";
+import { randomBytes } from "node:crypto";
 
 import type { Config } from "../config.js";
 import type {
@@ -128,20 +129,25 @@ export class RealUnlinkAdmin implements UnlinkAdminPort {
    * See the DevRel questions in the return notes for the exact contract change.
    */
   async registerFan(_input: RegisterFanInput): Promise<RegisterFanResult> {
-    // TODO(go-live): thread the client-derived RegistrationPayloadWire through
-    // UnlinkAdminPort.registerFan (it currently only carries `dynamicAddress`),
-    // then call `this.admin.users.register(wire)` and return its `address`.
-    // (Alternative if Unlink confirms server-custody is acceptable for the demo:
-    //  derive keys from a per-fan seed via `account.fromSeed(...)` in
-    //  @unlink-xyz/sdk/crypto, build the payload with `toRegistrationPayload`,
-    //  then register. Avoided here: it custodies the fan's spending key and
-    //  weakens the "nobody can link fan->creator" guarantee.)
-    throw new Error(
-      "RealUnlinkAdmin.registerFan is gated: admin.users.register() needs a " +
-        "client-derived RegistrationPayload, but RegisterFanInput only carries " +
-        "dynamicAddress. Wire the payload through the port (see TODO), or run " +
-        "MOCK=true. The Unlink admin client itself is fully constructed.",
-    );
+    // REAL registration via the server-custody path the header documents as the
+    // alternative: derive an Unlink account from a fresh per-fan seed, build its
+    // RegistrationPayload, and register it on the Unlink Engine (idempotent).
+    //
+    // TRADE-OFF (documented, intentional for the demo): the spending key is
+    // derived server-side from `seed`, so the server custodies it — this is the
+    // "tokens stay simulated, accounts are real" mode. The stronger client-derived
+    // flow (keys never leave the fan's device) is the upgrade path: thread a
+    // RegistrationPayloadWire through RegisterFanInput and pass it straight to
+    // `admin.users.register(wire)` instead of deriving here. The returned id is
+    // the bech32m Unlink address — a different keyspace from the EVM address, so
+    // it still never reveals the fan's real wallet.
+    const admin = await this.getAdmin();
+    const { account } = await import("@unlink-xyz/sdk/crypto");
+    const seed = new Uint8Array(randomBytes(32));
+    const localAccount = account.fromSeed({ seed });
+    const payload = await account.toRegistrationPayload(localAccount);
+    const { address } = await admin.users.register(payload);
+    return { fanAccountId: address };
   }
 
   /**

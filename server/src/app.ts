@@ -69,7 +69,8 @@ export async function buildApp(overrides?: Partial<Config>): Promise<BuiltApp> {
 
   app.log.info(
     {
-      mock: cfg.mock,
+      mockUnlink: cfg.mockUnlink,
+      mockCircle: cfg.mockCircle,
       unlink: adapters.unlink.kind,
       circle: adapters.circle.kind,
       chainEnv: cfg.chainEnv,

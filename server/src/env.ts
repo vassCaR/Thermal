@@ -23,10 +23,16 @@ export function loadEnvFile(explicitPath?: string): void {
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
     let value = trimmed.slice(eq + 1).trim();
-    // Strip a trailing inline comment when the value isn't quoted.
+    // Strip an inline comment when the value isn't quoted. Handles both a
+    // trailing " # comment" AND a value that is ONLY a comment (placeholder line
+    // like `KEY=   # describe me` -> empty, not the comment text).
     if (!/^["']/.test(value)) {
-      const hash = value.indexOf(" #");
-      if (hash !== -1) value = value.slice(0, hash).trim();
+      if (value.startsWith("#")) {
+        value = "";
+      } else {
+        const hash = value.indexOf(" #");
+        if (hash !== -1) value = value.slice(0, hash).trim();
+      }
     }
     // Strip surrounding quotes.
     if (

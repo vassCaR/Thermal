@@ -43,14 +43,13 @@ export function buildAdapters(
   cfg: Config,
   resolveCreatorAddress?: ResolveCreatorAddress,
 ): Adapters {
-  if (cfg.mock) {
-    return {
-      unlink: new MockUnlinkAdmin(),
-      circle: new MockCircleSettlement(),
-    };
-  }
+  // Per-service selection: each adapter is mock/real independently so mixed
+  // modes work (e.g. real Unlink accounts + mock Circle "tokens"). The real
+  // classes only construct/load their SDK when actually selected.
   return {
-    unlink: new RealUnlinkAdmin(cfg),
-    circle: new RealCircleSettlement(cfg, resolveCreatorAddress),
+    unlink: cfg.mockUnlink ? new MockUnlinkAdmin() : new RealUnlinkAdmin(cfg),
+    circle: cfg.mockCircle
+      ? new MockCircleSettlement()
+      : new RealCircleSettlement(cfg, resolveCreatorAddress),
   };
 }
